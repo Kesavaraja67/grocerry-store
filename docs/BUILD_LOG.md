@@ -66,7 +66,32 @@
 
 ## Phase 2 — Admin Master Data
 
-**Status:** IN PROGRESS
+**Status:** COMPLETE
+
+**Deliverables:**
+- [x] Admin server actions & queries:
+  - `src/server/admin/settings.ts`: Shop profile, order toggles, delivery params, rounding mode, password change
+  - `src/server/admin/categories.ts`: Category CRUD, reordering, active products guard on deactivation
+  - `src/server/admin/suppliers.ts`: Supplier CRUD, archive toggle, supplier profile metrics with products bought (last price, lowest price, current selling price) and purchase bills
+  - `src/server/admin/units.ts`: Units queries and compatible unit resolution
+  - `src/server/admin/products.ts`: Product CRUD, cheapest supplier lookup, price trend data, price-to-review sync, publish toggle, image association
+- [x] Admin UI pages and views:
+  - `/admin/login`: Owner login with rate-limiting error feedback
+  - `/admin`: Dashboard with 5 key metric cards (masked stock value), recent purchases and orders
+  - `/admin/settings`: Shop profile settings, ordering toggles, delivery fees, rounding mode selector, password change modal
+  - `/admin/categories`: Category manager with icon selector, tint color picker, default markups, up/down reorder
+  - `/admin/suppliers`: Supplier list with search, contact info, add/edit/archive modal
+  - `/admin/suppliers/[id]`: Supplier profile with summary metrics, products bought tab, purchase bills tab
+  - `/admin/products`: Product list table with search, category & stock filters, mobile stacked cards, publish toggles, price-review badges
+  - `/admin/products/new`: Create product page with Tamil name, units, min/max qty, pricing engine panel
+  - `/admin/products/[id]/edit`: Edit product page
+  - `/admin/products/[id]`: Product detail view with hero info, cheapest supplier banner, Recharts price trend line chart, purchase history, stock movement log, price history log
+  - `ProductForm.tsx`: Shared product form with Pricing Engine (Low/Recommended/High suggestions, custom markup %, direct price entry, live margin/markup/profit calculation, below-cost warning, MRP guard)
+
+**Gate Verification:**
+- `npm run typecheck`: 0 errors (green)
+- `npm run lint`: 0 errors (green)
+- `npm test`: 28 passed (green)
 
 ---
 
