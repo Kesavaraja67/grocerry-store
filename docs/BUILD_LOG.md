@@ -97,7 +97,33 @@
 
 ## Phase 3 — Purchases, Inventory, Costing
 
-**Status:** PENDING
+**Status:** COMPLETE
+
+**Deliverables:**
+- [x] Purchases domain & server actions (`src/server/admin/purchases.ts`):
+  - `getPurchases`: Filterable wholesale purchases list (supplier, status, dates, search) with pagination
+  - `getPurchaseById`: Detailed bill breakdown, supplier info, unit cost calculation, and item-by-item previous purchase comparison
+  - `getProductLastPurchaseRate`: Real-time previous purchase rate fetcher for purchase lines
+  - `recordPurchase`: Multi-line purchase entry, pack units to base units conversion, proportional allocation of extra charges (transport/loading), stock updates, moving average cost calculation, StockMovement logging, and post-save price review item generator
+  - `voidPurchase`: Void bill action reversing stock movements, guarding against voiding if stock was already sold, and chronologically replaying purchase ledger to restore accurate item costs
+  - `correctPurchase`: Transactionally voids erroneous purchase and replaces it with corrected purchase linked by `replacesId`
+- [x] Inventory domain & server actions (`src/server/admin/inventory.ts`):
+  - `getInventory`: Product stock list with status (In Stock, Low Stock, Out of Stock), category filter, stock valuation, and privacy masking
+  - `adjustStock`: Stock adjustment (ADD, REMOVE, SET) with required reasons (Damaged, Expired, Count correction, Opening stock, Returned, Other), notes, and negative stock guard
+  - `getStockMovements`: Chronological stock movement log per product
+  - `exportInventoryCsv`: Complete inventory valuation dataset exported as CSV
+- [x] Admin UI pages and views:
+  - `/admin/purchases`: Filterable list of wholesale purchase bills, desktop table, mobile stacked cards, and status badges
+  - `/admin/purchases/[id]`: Purchase bill detail view, replacement links, void notice, print shortcut, and Void Bill modal
+  - `/admin/purchases/new`: Phone-first purchase form (Section 10), inline Add Supplier and Add Product modals, auto-calculated line totals/rates, pack size helper, draft localStorage persistence with restore/discard prompt, running totals summary, and post-save "Review Selling Prices" modal dialog
+  - `/admin/inventory`: Inventory manager with 5 summary metric cards, privacy mask toggle, status tabs, Adjust Stock modal with live balance preview, Stock Movement history dialog, and CSV export
+- [x] Integration test suite (`tests/integration/purchases-inventory.test.ts`):
+  - 6 integration tests verifying pack conversion, proportional extra charge allocation, moving weighted average cost computation, ledger replay after voiding, pricing suggestions with MRP guards, and cross-dimension unit rejections
+
+**Gate Verification:**
+- `npm run typecheck`: 0 errors (green)
+- `npm run lint`: 0 errors (green)
+- `npm test`: 34 passed (28 domain unit tests + 6 integration tests, all green)
 
 ---
 

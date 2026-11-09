@@ -119,6 +119,8 @@ export const purchaseLineSchema = z.object({
   lineAmount: z.number().positive("Line amount must be greater than zero."),
 });
 
+export type PurchaseLineInput = z.infer<typeof purchaseLineSchema>;
+
 // Purchase creation schema
 export const purchaseSchema = z.object({
   supplierId: z.string().min(1, "Wholesale store is required."),
@@ -130,6 +132,8 @@ export const purchaseSchema = z.object({
   notes: z.string().trim().max(500).optional().nullable(),
   items: z.array(purchaseLineSchema).min(1, "At least one purchase item is required."),
 });
+
+export type PurchaseFormInput = z.infer<typeof purchaseSchema>;
 
 // Stock adjustment schema
 export const stockAdjustmentSchema = z.object({
@@ -146,6 +150,8 @@ export const stockAdjustmentSchema = z.object({
   ]),
   note: z.string().trim().max(250).optional().nullable(),
 });
+
+export type StockAdjustmentInput = z.infer<typeof stockAdjustmentSchema>;
 
 // Settings update schema
 export const shopSettingsSchema = z.object({
@@ -167,3 +173,4 @@ export const shopSettingsSchema = z.object({
   acceptingOrders: z.boolean().default(true),
   roundingMode: z.enum(["NONE", "NEAREST_HALF", "NEAREST_1", "UP_1"]).default("UP_1"),
 });
+

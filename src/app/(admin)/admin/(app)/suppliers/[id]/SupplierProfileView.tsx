@@ -333,3 +333,4 @@ export function SupplierProfileView({ profile }: SupplierProfileViewProps) {
     </div>
   );
 }
+

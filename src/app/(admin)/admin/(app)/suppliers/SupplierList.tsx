@@ -353,3 +353,4 @@ export function SupplierList({ initialSuppliers, initialSearch }: SupplierListPr
     </div>
   );
 }
+

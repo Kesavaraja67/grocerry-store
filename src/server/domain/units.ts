@@ -128,3 +128,4 @@ export function formatQuantity(
   const formattedNumber = qty.toFixed(3).replace(/\.?0+$/, "");
   return `${formattedNumber} ${unitSymbol}`;
 }
+

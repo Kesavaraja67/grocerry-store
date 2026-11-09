@@ -198,3 +198,4 @@ export function isPriceReviewNeeded(
 
   return !c1.eq(c2);
 }
+

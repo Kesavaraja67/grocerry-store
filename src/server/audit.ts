@@ -30,3 +30,4 @@ export async function recordAuditLog(
     console.error("Failed to write audit log:", error);
   }
 }
+

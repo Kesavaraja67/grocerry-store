@@ -69,3 +69,4 @@ export const AVAILABLE_CATEGORY_ICONS = [
   { key: "household", label: "Household & Cleaning", component: Broom },
   { key: "basket", label: "General Groceries", component: Basket },
 ];
+

@@ -41,3 +41,4 @@ export function generateSignedUploadParams(): SignedUploadParams {
 }
 
 export default cloudinary;
+

@@ -148,3 +148,4 @@ export function recomputeCostsFromLedger(events: LedgerEvent[]): {
     finalStock: stock.toDecimalPlaces(3, Decimal.ROUND_HALF_UP),
   };
 }
+

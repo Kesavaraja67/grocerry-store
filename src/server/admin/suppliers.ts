@@ -286,3 +286,4 @@ export async function toggleArchiveSupplier(id: string) {
 
   return { success: true, isArchived: updated.isArchived };
 }
+

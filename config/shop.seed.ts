@@ -49,3 +49,4 @@ export const INITIAL_OWNER = {
   password: process.env.OWNER_INITIAL_PASSWORD || "Pandian@2026",
   name: "Pandian (Shop Owner)",
 };
+

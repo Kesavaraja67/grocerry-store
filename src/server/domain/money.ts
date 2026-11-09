@@ -72,3 +72,4 @@ export function formatINR(amount: Decimal | number | string | null | undefined, 
   const formatted = `${isNegative ? "-" : ""}${result}.${decPart}`;
   return includeSymbol ? `₹${formatted}` : formatted;
 }
+

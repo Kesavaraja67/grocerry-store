@@ -437,3 +437,4 @@ export function ProductListTable({
     </div>
   );
 }
+
