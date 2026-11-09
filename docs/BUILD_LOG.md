@@ -129,7 +129,26 @@
 
 ## Phase 4 — Pricing, Dashboard, Reports
 
-**Status:** PENDING
+**Status:** COMPLETE
+
+**Deliverables:**
+- [x] Pricing engine & server actions (`src/server/admin/pricing.ts`):
+  - `getPricingProducts`: Full product list with cost basis, unit cost, live markup %, profit per unit, margin %, MRP guard validation, price review flags, and Low/Recommended/High suggestions
+  - `updateProductSellingPrice`: Direct selling price updater with MRP guard, pricedAtCost synchronization, and PriceHistory logging
+  - `bulkApplyRecommendedPricing`: One-click bulk pricing applying category recommended markups to selected products
+  - `updateProductCostBasis`: Toggles cost basis per product between LATEST purchase rate and moving AVERAGE cost
+- [x] Reports & Analytics (`src/server/admin/reports.ts`):
+  - `getReportsData`: Aggregates 5 core reports (Purchases by wholesale store, product price trends, category stock valuations, low stock alerts, and orders summary)
+  - `exportReportCsv`: Dedicated CSV export generator for all 5 report types
+- [x] Admin UI pages and views:
+  - `/admin`: Dashboard with 5 key metric cards (New orders, Low stock, Total catalog items, Stock valuation, Prices to review), quick action tiles, recent purchases, and recent customer orders
+  - `/admin/pricing`: Pricing master management table with inline price editing, cost basis toggle, privacy masking, status filters (To Review, Selling at Loss, No Price), bulk apply recommended markup, and plain-English/Tamil Markup vs Margin explainer banner
+  - `/admin/reports`: Interactive reporting analytics with 5 category tabs, privacy masking support, and CSV export downloads
+
+**Gate Verification:**
+- `npm run typecheck`: 0 errors (green)
+- `npm run lint`: 0 errors (green)
+- `npm test`: 34 passed (green)
 
 ---
 
