@@ -72,9 +72,18 @@ export default async function AdminAppLayout({
           })}
         </nav>
 
-        <div className="p-3 border-t border-border text-xs text-muted">
-          <p className="truncate font-medium text-ink">{session.user.name}</p>
-          <p className="truncate text-[11px]">{session.user.email}</p>
+        <div className="p-3 border-t border-border space-y-2.5 text-xs text-muted">
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-md border border-border bg-page hover:bg-leaf-light hover:text-leaf hover:border-leaf/30 font-semibold text-ink transition-colors min-h-[40px]"
+          >
+            <Storefront size={16} weight="bold" className="text-leaf" />
+            <span>View Customer Store</span>
+          </Link>
+          <div className="px-1">
+            <p className="truncate font-medium text-ink">{session.user.name}</p>
+            <p className="truncate text-[11px]">{session.user.email}</p>
+          </div>
         </div>
       </aside>
 

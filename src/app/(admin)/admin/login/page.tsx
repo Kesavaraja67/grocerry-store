@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { LockKey, EnvelopeSimple } from "@phosphor-icons/react";
+import { LockKey, EnvelopeSimple, ArrowLeft } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -140,9 +141,18 @@ export default function AdminLoginPage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-muted mt-6">
-          Confidential & Protected · Pandian Store MVP 1.0
-        </p>
+        <div className="mt-5 flex flex-col items-center gap-2 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-leaf hover:underline px-3 py-2"
+          >
+            <ArrowLeft size={14} weight="bold" />
+            <span>Back to Pandian Storefront</span>
+          </Link>
+          <p className="text-xs text-muted">
+            Confidential &amp; Protected · Pandian Store MVP 1.0
+          </p>
+        </div>
       </div>
     </div>
   );

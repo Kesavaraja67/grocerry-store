@@ -105,8 +105,18 @@ export function AdminTopBar({ userEmail }: AdminTopBarProps) {
           </form>
         </div>
 
-        {/* Right controls: Privacy Mode + Logout */}
+        {/* Right controls: View Store + Privacy Mode + Logout */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <Link
+            href="/"
+            title="Go to customer storefront"
+            className="inline-flex items-center gap-1.5 h-10 px-2.5 sm:px-3 rounded-md border border-border bg-page hover:bg-leaf-light hover:text-leaf hover:border-leaf/30 text-xs font-semibold text-ink transition-colors shrink-0"
+          >
+            <Storefront size={16} weight="bold" className="text-leaf" />
+            <span className="hidden sm:inline">View Store</span>
+            <span className="sm:hidden">Shop</span>
+          </Link>
+
           <Button
             type="button"
             variant={privacyMode ? "turmeric" : "outline"}
