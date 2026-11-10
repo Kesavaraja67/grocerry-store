@@ -6,12 +6,14 @@ const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
+  adjustFontFallback: false,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
+  adjustFontFallback: false,
 });
 
 const notoSansTamil = Noto_Sans_Tamil({
@@ -19,6 +21,7 @@ const notoSansTamil = Noto_Sans_Tamil({
   subsets: ["tamil"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
+  adjustFontFallback: false,
 });
 
 export const viewport: Viewport = {

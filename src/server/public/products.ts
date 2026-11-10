@@ -132,37 +132,45 @@ function formatPublicSummary(
  * Returns featured products for the storefront homepage.
  */
 export async function getFeaturedProducts(limit = 8): Promise<PublicProductSummary[]> {
-  const products = await prisma.product.findMany({
-    where: {
-      isArchived: false,
-      isPublished: true,
-      sellingPrice: { not: null },
-      isFeatured: true,
-    },
-    select: publicProductSelect,
-    take: limit,
-    orderBy: { name: "asc" },
-  });
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        isArchived: false,
+        isPublished: true,
+        sellingPrice: { not: null },
+        isFeatured: true,
+      },
+      select: publicProductSelect,
+      take: limit,
+      orderBy: { name: "asc" },
+    });
 
-  return products.map(formatPublicSummary).filter((p): p is PublicProductSummary => p !== null);
+    return products.map(formatPublicSummary).filter((p): p is PublicProductSummary => p !== null);
+  } catch {
+    return [];
+  }
 }
 
 /**
  * Returns popular staple grocery products for the storefront homepage.
  */
 export async function getStapleProducts(limit = 12): Promise<PublicProductSummary[]> {
-  const products = await prisma.product.findMany({
-    where: {
-      isArchived: false,
-      isPublished: true,
-      sellingPrice: { not: null },
-    },
-    select: publicProductSelect,
-    take: limit,
-    orderBy: [{ stockQty: "desc" }, { name: "asc" }],
-  });
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        isArchived: false,
+        isPublished: true,
+        sellingPrice: { not: null },
+      },
+      select: publicProductSelect,
+      take: limit,
+      orderBy: [{ stockQty: "desc" }, { name: "asc" }],
+    });
 
-  return products.map(formatPublicSummary).filter((p): p is PublicProductSummary => p !== null);
+    return products.map(formatPublicSummary).filter((p): p is PublicProductSummary => p !== null);
+  } catch {
+    return [];
+  }
 }
 
 /**

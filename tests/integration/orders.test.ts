@@ -101,3 +101,4 @@ describe("Phase 6 Integration: Order State Machine & Transitions", () => {
     expect(decoded).toContain("Ponni Rice 2kg");
   });
 });
+

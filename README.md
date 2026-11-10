@@ -106,3 +106,4 @@ npm run build
 - [`docs/DEMO_SCRIPT.md`](./docs/DEMO_SCRIPT.md): Step-by-step walkthrough script for client demonstrations.
 - [`docs/BUILD_LOG.md`](./docs/BUILD_LOG.md): Full development log with phase gates and deliverable checklists.
 - [`docs/DECISIONS.md`](./docs/DECISIONS.md): Architectural decisions, design system tokens, and ASCII wireframes.
+

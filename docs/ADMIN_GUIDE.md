@@ -138,3 +138,4 @@ Navigate to **Inventory** (`/admin/inventory`) to track stock levels:
 - **Evening (9:00 PM)**:
   - Check completed orders and total collection.
   - If you are closing for a festival or holiday, go to **Settings** (`/admin/settings`) and toggle **"Accept Online Orders"** to Paused.
+

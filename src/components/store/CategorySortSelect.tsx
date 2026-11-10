@@ -39,3 +39,4 @@ export function CategorySortSelect({ currentSort }: CategorySortSelectProps) {
     </div>
   );
 }
+

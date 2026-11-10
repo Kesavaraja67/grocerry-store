@@ -121,3 +121,4 @@ Use this script to demonstrate the complete, end-to-end functionality of Pandian
 2. Look at the top bar and click **"Privacy mode"** (Eye icon).
 3. Every wholesale purchase cost, profit figure, and markup percentage on the screen instantly blurs.
 4. Explain: *"When a customer walks into the shop or an employee is helping at the counter, your profit and wholesale costs are 100% private."*
+

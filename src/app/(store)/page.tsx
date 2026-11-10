@@ -23,18 +23,63 @@ export const metadata = {
 };
 
 export default async function StoreHomePage() {
-  const [categories, featuredProducts, stapleProducts, shopSettings] =
-    await Promise.all([
-      getPublicCategories(),
-      getFeaturedProducts(8),
-      getStapleProducts(12),
-      prisma.shopSettings.findFirst({ where: { id: 1 } }),
-    ]);
+  let categories: any[] = [];
+  let featuredProducts: any[] = [];
+  let stapleProducts: any[] = [];
+  let shopSettings: any = null;
+  let isDbOffline = false;
+
+  try {
+    [categories, featuredProducts, stapleProducts, shopSettings] =
+      await Promise.all([
+        getPublicCategories(),
+        getFeaturedProducts(8),
+        getStapleProducts(12),
+        prisma.shopSettings.findFirst({ where: { id: 1 } }),
+      ]);
+  } catch {
+    isDbOffline = true;
+  }
 
   const isAccepting = shopSettings ? shopSettings.acceptingOrders : true;
 
   return (
     <div className="space-y-8">
+      {isDbOffline && (
+        <section className="max-w-7xl mx-auto px-4 pt-2">
+          <div className="p-4 sm:p-5 rounded-xl bg-amber-50 border border-amber-300 text-ink shadow-xs">
+            <div className="flex items-start gap-3">
+              <Package size={24} className="text-amber-700 shrink-0 mt-0.5" />
+              <div className="space-y-1.5 text-xs sm:text-sm">
+                <h3 className="font-bold text-amber-900 text-sm sm:text-base">
+                  PostgreSQL Database Server Not Connected
+                </h3>
+                <p className="text-amber-800 leading-relaxed">
+                  Pandian Store is running in offline preview mode because no PostgreSQL database was reached at{" "}
+                  <code className="bg-amber-100 px-1.5 py-0.5 rounded text-amber-950 font-mono text-xs">
+                    localhost:5432
+                  </code>
+                  .
+                </p>
+                <div className="pt-2 flex flex-col sm:flex-row gap-2 font-mono text-xs text-amber-950">
+                  <div className="bg-white/80 p-2.5 rounded border border-amber-200 flex-1">
+                    <p className="font-sans font-bold text-ink mb-1">Option 1: Docker PostgreSQL</p>
+                    <code>docker run -d --name pandian-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pandian_store -p 5432:5432 postgres:16-alpine</code>
+                  </div>
+                  <div className="bg-white/80 p-2.5 rounded border border-amber-200 flex-1">
+                    <p className="font-sans font-bold text-ink mb-1">Option 2: Free Neon Cloud Database</p>
+                    <p className="font-sans text-muted">Create a free database at <a href="https://neon.tech" target="_blank" className="underline text-leaf font-semibold">neon.tech</a> and paste its connection string into <code className="bg-amber-100 px-1 py-0.5 rounded">.env</code>.</p>
+                  </div>
+                </div>
+                <p className="text-xs text-amber-900 pt-1">
+                  Once connected, run: <code className="font-bold bg-amber-100 px-1.5 py-0.5 rounded">npm run db:push && npm run db:seed:demo</code> to load all products and demo data!
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Category Strip */}
       <CategoryStrip categories={categories} />
 

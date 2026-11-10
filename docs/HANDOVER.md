@@ -112,3 +112,4 @@ The owner can change their password at `/admin/settings` directly via the web po
 
 ### Audit Logs
 All critical operations (price changes, inventory adjustments, purchase voids, order acceptance/cancellation) are logged in the `AuditLog` table with action name, entity ID, timestamp, and metadata payload.
+

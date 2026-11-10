@@ -13,9 +13,14 @@ export default async function StorefrontLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const shopSettings = await prisma.shopSettings.findFirst({
-    where: { id: 1 },
-  });
+  let shopSettings = null;
+  try {
+    shopSettings = await prisma.shopSettings.findFirst({
+      where: { id: 1 },
+    });
+  } catch {
+    // Database offline or unreachable, fall back to default shop profile
+  }
 
   const settings = {
     shopName: shopSettings?.shopName || copy.shop.name,

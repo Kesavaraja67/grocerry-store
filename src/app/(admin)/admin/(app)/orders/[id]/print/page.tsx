@@ -25,3 +25,4 @@ export default async function OrderSlipPage({ params }: OrderSlipPageProps) {
 
   return <OrderSlipPrintView order={order} settings={settings} />;
 }
+

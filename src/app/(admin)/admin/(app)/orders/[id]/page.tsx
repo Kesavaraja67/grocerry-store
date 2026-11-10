@@ -23,3 +23,4 @@ export default async function AdminOrderDetailPage({ params }: OrderDetailPagePr
 
   return <OrderDetailView order={order} whatsAppUrl={whatsAppUrl} />;
 }
+
