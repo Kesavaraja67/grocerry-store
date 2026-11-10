@@ -38,7 +38,12 @@ export const metadata: Metadata = {
   },
   description: "Your trusted neighbourhood grocery store. Fresh rice, dal, oils, spices, and daily kitchen essentials.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/icon.png?v=2", type: "image/png", sizes: "256x256" },
+      { url: "/favicon.ico?v=2", sizes: "any" },
+    ],
+    shortcut: "/favicon.ico?v=2",
+    apple: "/apple-icon.png?v=2",
   },
 };
 
