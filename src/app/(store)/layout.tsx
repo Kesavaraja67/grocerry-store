@@ -46,9 +46,13 @@ export default async function StorefrontLayout({
         <footer className="bg-surface border-t border-border mt-auto pt-8 pb-20 md:pb-8">
           <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-ink-muted">
             <div>
-              <h4 className="font-semibold text-ink text-base mb-2 font-heading">
-                {settings.shopName}
-              </h4>
+              <Link href="/" className="inline-block mb-2">
+                <img
+                  src="/images/logo.png"
+                  alt={settings.shopName}
+                  className="h-14 w-auto object-contain"
+                />
+              </Link>
               <p className="text-xs text-ink-muted mb-2 font-tamil">
                 பாண்டியன் ஸ்டோர் — உங்கள் குடும்பத்துக்கான தரமான மளிகை கடை
               </p>

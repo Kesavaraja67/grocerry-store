@@ -85,13 +85,22 @@ export function StoreHeader({ shopSettings }: Props) {
       <div className="sticky top-0 z-40 bg-leaf text-white shadow-xs">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
-          <Link href="/" className="flex flex-col shrink-0 min-w-0">
-            <span className="text-lg sm:text-2xl font-bold tracking-tight text-white font-heading leading-tight">
-              {shopSettings.shopName}
-            </span>
-            <span className="text-[11px] sm:text-xs text-white/75 mt-0.5 leading-none font-tamil">
-              பாண்டியன் ஸ்டோர்
-            </span>
+          <Link href="/" className="flex items-center gap-2.5 shrink-0 min-w-0">
+            <div className="bg-[#FAF5F1] rounded-lg px-2 py-1 shadow-xs flex items-center justify-center shrink-0">
+              <img
+                src="/images/logo.png"
+                alt={shopSettings.shopName}
+                className="h-9 sm:h-11 w-auto object-contain"
+              />
+            </div>
+            <div className="hidden lg:flex flex-col">
+              <span className="text-lg font-bold tracking-tight text-white font-heading leading-tight">
+                {shopSettings.shopName}
+              </span>
+              <span className="text-[11px] text-white/75 mt-0.5 leading-none font-tamil">
+                பாண்டியன் ஸ்டோர்
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Search Bar with Live Suggestions */}

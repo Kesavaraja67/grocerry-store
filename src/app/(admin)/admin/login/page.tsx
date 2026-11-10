@@ -45,11 +45,13 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center p-4 bg-page">
       <div className="w-full max-w-md">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
-            {copy.shop.name}
-          </h1>
-          <p className="text-xs text-muted font-tamil mt-0.5">பாண்டியன் ஸ்டோர் — உரிமையாளர் உள்நுழைவு</p>
+        <div className="text-center mb-5">
+          <img
+            src="/images/logo.png"
+            alt={copy.shop.name}
+            className="h-24 w-auto object-contain mx-auto mb-2"
+          />
+          <p className="text-xs text-muted font-tamil">பாண்டியன் ஸ்டோர் — உரிமையாளர் உள்நுழைவு</p>
           <p className="text-xs text-muted mt-1">Owner Administration Portal</p>
         </div>
 

@@ -160,9 +160,16 @@ export function AdminTopBar({ userEmail }: AdminTopBarProps) {
       {menuOpen && (
         <div className="md:hidden bg-surface border-b border-border shadow-md px-3 py-3 space-y-2">
           <div className="flex items-center justify-between px-2 pb-2 border-b border-border">
-            <div>
-              <p className="text-sm font-bold text-leaf">Pandian Store Admin</p>
-              {userEmail && <p className="text-[11px] text-muted">{userEmail}</p>}
+            <div className="flex items-center gap-2">
+              <img
+                src="/images/logo.png"
+                alt="Pandian Stores"
+                className="h-8 w-auto object-contain shrink-0"
+              />
+              <div>
+                <p className="text-sm font-bold text-leaf leading-tight">Pandian Store Admin</p>
+                {userEmail && <p className="text-[11px] text-muted">{userEmail}</p>}
+              </div>
             </div>
             <Link
               href="/"

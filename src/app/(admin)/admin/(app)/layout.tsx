@@ -46,12 +46,19 @@ export default async function AdminAppLayout({
     <div className="min-h-[100dvh] flex flex-col md:flex-row bg-page text-ink">
       {/* Desktop Sidebar (Section 10) */}
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-surface shrink-0">
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <Link href="/admin" className="flex flex-col">
-            <span className="font-bold text-lg text-leaf leading-tight">Pandian Store</span>
-            <span className="text-[11px] text-muted font-tamil">உரிமையாளர் பகுதி</span>
+        <div className="p-3.5 border-b border-border flex items-center justify-between gap-2">
+          <Link href="/admin" className="flex items-center gap-2.5 min-w-0">
+            <img
+              src="/images/logo.png"
+              alt="Pandian Stores"
+              className="h-10 w-auto object-contain shrink-0"
+            />
+            <div className="min-w-0">
+              <span className="font-bold text-sm text-leaf leading-tight block truncate">Pandian Store</span>
+              <span className="text-[11px] text-muted font-tamil block truncate">உரிமையாளர் பகுதி</span>
+            </div>
           </Link>
-          <span className="text-[10px] bg-leaf-light text-leaf px-2 py-0.5 rounded-full font-semibold border border-[#D5E3DA]">
+          <span className="text-[10px] bg-leaf-light text-leaf px-2 py-0.5 rounded-full font-semibold border border-[#D5E3DA] shrink-0">
             Admin
           </span>
         </div>
