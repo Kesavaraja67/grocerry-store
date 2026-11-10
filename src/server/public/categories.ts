@@ -45,7 +45,8 @@ export async function getPublicCategories(): Promise<PublicCategoryItem[]> {
       tint: c.tint,
       productCount: c._count.products,
     }));
-  } catch {
+  } catch (err) {
+    console.error("[getPublicCategories] Failed:", err);
     return [];
   }
 }

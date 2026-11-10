@@ -10,7 +10,7 @@ import {
   CreditCard,
   ArrowLeft,
 } from "@phosphor-icons/react/dist/ssr";
-import { prisma } from "@/server/db";
+import { getPublicShopSettings } from "@/server/public/shop";
 import { copy } from "@/lib/copy";
 
 export const metadata = {
@@ -20,9 +20,7 @@ export const metadata = {
 };
 
 export default async function ContactPage() {
-  const shopSettings = await prisma.shopSettings.findFirst({
-    where: { id: 1 },
-  });
+  const shopSettings = await getPublicShopSettings().catch(() => null);
 
   const shopName = shopSettings?.shopName || copy.shop.name;
   const phone = shopSettings?.phone || "9842100000";

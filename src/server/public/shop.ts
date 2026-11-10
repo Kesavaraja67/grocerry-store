@@ -9,3 +9,4 @@ export const getPublicShopSettings = cache(async () => {
     where: { id: 1 },
   });
 });
+

@@ -146,7 +146,8 @@ export async function getFeaturedProducts(limit = 8): Promise<PublicProductSumma
     });
 
     return products.map(formatPublicSummary).filter((p): p is PublicProductSummary => p !== null);
-  } catch {
+  } catch (err) {
+    console.error("[getFeaturedProducts] Failed:", err);
     return [];
   }
 }
@@ -168,7 +169,8 @@ export async function getStapleProducts(limit = 12): Promise<PublicProductSummar
     });
 
     return products.map(formatPublicSummary).filter((p): p is PublicProductSummary => p !== null);
-  } catch {
+  } catch (err) {
+    console.error("[getStapleProducts] Failed:", err);
     return [];
   }
 }
