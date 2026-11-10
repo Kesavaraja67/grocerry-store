@@ -1,4 +1,4 @@
-# Pandian Store (பாண்டியன் ஸ்டோர்) — MVP 1.0
+# Pandian Store — MVP 1.0
 
 A complete, production-quality, two-sided web platform built for a neighbourhood grocery store.
 

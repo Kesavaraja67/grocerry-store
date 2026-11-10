@@ -9,12 +9,19 @@ import {
   ArrowRight,
   Package,
 } from "@phosphor-icons/react/dist/ssr";
-import { getFeaturedProducts, getStapleProducts } from "@/server/public/products";
-import { getPublicCategories } from "@/server/public/categories";
+import {
+  getFeaturedProducts,
+  getStapleProducts,
+  type PublicProductSummary,
+} from "@/server/public/products";
+import {
+  getPublicCategories,
+  type PublicCategoryItem,
+} from "@/server/public/categories";
+import { getPublicShopSettings } from "@/server/public/shop";
 import { ProductCard } from "@/components/store/ProductCard";
 import { CategoryStrip } from "@/components/store/CategoryStrip";
 import { CategoryIcon } from "@/components/shared/CategoryIcon";
-import { prisma } from "@/server/db";
 
 export const metadata = {
   title: "Pandian Store — Fresh Groceries Delivered to Your Doorstep",
@@ -23,10 +30,10 @@ export const metadata = {
 };
 
 export default async function StoreHomePage() {
-  let categories: any[] = [];
-  let featuredProducts: any[] = [];
-  let stapleProducts: any[] = [];
-  let shopSettings: any = null;
+  let categories: PublicCategoryItem[] = [];
+  let featuredProducts: PublicProductSummary[] = [];
+  let stapleProducts: PublicProductSummary[] = [];
+  let shopSettings: Awaited<ReturnType<typeof getPublicShopSettings>> = null;
   let isDbOffline = false;
 
   try {
@@ -35,9 +42,10 @@ export default async function StoreHomePage() {
         getPublicCategories(),
         getFeaturedProducts(8),
         getStapleProducts(12),
-        prisma.shopSettings.findFirst({ where: { id: 1 } }),
+        getPublicShopSettings(),
       ]);
-  } catch {
+  } catch (err) {
+    console.error("[StoreHomePage] Database connection failed:", err);
     isDbOffline = true;
   }
 
@@ -52,27 +60,14 @@ export default async function StoreHomePage() {
               <Package size={24} className="text-amber-700 shrink-0 mt-0.5" />
               <div className="space-y-1.5 text-xs sm:text-sm">
                 <h3 className="font-bold text-amber-900 text-sm sm:text-base">
-                  PostgreSQL Database Server Not Connected
+                  Database Connection Temporarily Unavailable
                 </h3>
                 <p className="text-amber-800 leading-relaxed">
-                  Pandian Store is running in offline preview mode because no PostgreSQL database was reached at{" "}
+                  Pandian Store could not reach the configured PostgreSQL database. Check your network connection or{" "}
                   <code className="bg-amber-100 px-1.5 py-0.5 rounded text-amber-950 font-mono text-xs">
-                    localhost:5432
-                  </code>
-                  .
-                </p>
-                <div className="pt-2 flex flex-col sm:flex-row gap-2 font-mono text-xs text-amber-950">
-                  <div className="bg-white/80 p-2.5 rounded border border-amber-200 flex-1">
-                    <p className="font-sans font-bold text-ink mb-1">Option 1: Docker PostgreSQL</p>
-                    <code>docker run -d --name pandian-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pandian_store -p 5432:5432 postgres:16-alpine</code>
-                  </div>
-                  <div className="bg-white/80 p-2.5 rounded border border-amber-200 flex-1">
-                    <p className="font-sans font-bold text-ink mb-1">Option 2: Free Neon Cloud Database</p>
-                    <p className="font-sans text-muted">Create a free database at <a href="https://neon.tech" target="_blank" className="underline text-leaf font-semibold">neon.tech</a> and paste its connection string into <code className="bg-amber-100 px-1 py-0.5 rounded">.env</code>.</p>
-                  </div>
-                </div>
-                <p className="text-xs text-amber-900 pt-1">
-                  Once connected, run: <code className="font-bold bg-amber-100 px-1.5 py-0.5 rounded">npm run db:push && npm run db:seed:demo</code> to load all products and demo data!
+                    DATABASE_URL
+                  </code>{" "}
+                  in <code className="bg-amber-100 px-1 py-0.5 rounded">.env</code> and refresh the page.
                 </p>
               </div>
             </div>

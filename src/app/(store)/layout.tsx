@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Phone, WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
-import { prisma } from "@/server/db";
+import { getPublicShopSettings } from "@/server/public/shop";
 import { copy } from "@/lib/copy";
 import { CartProvider } from "@/context/CartContext";
 import { StoreHeader, MobileBottomNav } from "@/components/store/StoreHeader";
@@ -15,11 +15,9 @@ export default async function StorefrontLayout({
 }) {
   let shopSettings = null;
   try {
-    shopSettings = await prisma.shopSettings.findFirst({
-      where: { id: 1 },
-    });
-  } catch {
-    // Database offline or unreachable, fall back to default shop profile
+    shopSettings = await getPublicShopSettings();
+  } catch (err) {
+    console.error("[StorefrontLayout] Failed to load shopSettings:", err);
   }
 
   const settings = {
@@ -55,7 +53,10 @@ export default async function StorefrontLayout({
                 பாண்டியன் ஸ்டோர் — உங்கள் குடும்பத்துக்கான தரமான மளிகை கடை
               </p>
               <p className="text-xs leading-relaxed">
-                {settings.addressLine}, {settings.area}, {settings.city} – {settings.pincode}
+                {[settings.addressLine, settings.area, settings.city]
+                  .filter(Boolean)
+                  .join(", ")}{" "}
+                – {settings.pincode}
               </p>
             </div>
             <div>
