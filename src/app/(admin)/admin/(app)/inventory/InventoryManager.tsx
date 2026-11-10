@@ -942,3 +942,4 @@ export function InventoryManager({
     </div>
   );
 }
+

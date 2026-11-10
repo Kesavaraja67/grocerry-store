@@ -21,17 +21,21 @@ export const checkoutOrderSchema = z
       .min(2, "Name must be at least 2 characters.")
       .max(60, "Name cannot exceed 60 characters."),
     customerPhone: phoneSchema,
+    whatsapp: z.string().trim().optional().nullable(),
     fulfilment: z.enum(["DELIVERY", "PICKUP"]),
-    addressLine: z.string().trim().max(120, "Address is too long.").optional(),
-    area: z.string().trim().max(60, "Area is too long.").optional(),
-    landmark: z.string().trim().max(60, "Landmark is too long.").optional(),
+    addressLine: z.string().trim().max(120, "Address is too long.").optional().nullable(),
+    area: z.string().trim().max(60, "Area is too long.").optional().nullable(),
+    landmark: z.string().trim().max(60, "Landmark is too long.").optional().nullable(),
     pincode: z
       .string()
       .trim()
       .regex(/^\d{6}$/, "Pincode must be a 6-digit number.")
-      .optional(),
-    notes: z.string().trim().max(300, "Notes cannot exceed 300 characters.").optional(),
-    idempotencyKey: z.string().uuid("Invalid idempotency key."),
+      .optional()
+      .nullable(),
+    notes: z.string().trim().max(300, "Notes cannot exceed 300 characters.").optional().nullable(),
+    customerNotes: z.string().trim().max(300, "Notes cannot exceed 300 characters.").optional().nullable(),
+    idempotencyKey: z.string().min(1, "Idempotency key required."),
+    website: z.string().optional().nullable(), // Honeypot field
     items: z
       .array(
         z.object({
@@ -66,6 +70,8 @@ export const checkoutOrderSchema = z
       }
     }
   });
+
+export type CheckoutOrderInput = z.infer<typeof checkoutOrderSchema>;
 
 // Supplier schema
 export const supplierSchema = z.object({

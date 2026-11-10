@@ -305,19 +305,19 @@ export async function getPurchaseById(id: string) {
     voidReason: purchase.voidReason,
     replaces: purchase.replaces
       ? {
-          id: purchase.replaces.id,
-          invoiceNo: purchase.replaces.invoiceNo,
-          purchaseDate: purchase.replaces.purchaseDate.toISOString().split("T")[0],
-          total: purchase.replaces.total.toNumber(),
-        }
+        id: purchase.replaces.id,
+        invoiceNo: purchase.replaces.invoiceNo,
+        purchaseDate: purchase.replaces.purchaseDate.toISOString().split("T")[0],
+        total: purchase.replaces.total.toNumber(),
+      }
       : null,
     replacedBy: purchase.replacedBy
       ? {
-          id: purchase.replacedBy.id,
-          invoiceNo: purchase.replacedBy.invoiceNo,
-          purchaseDate: purchase.replacedBy.purchaseDate.toISOString().split("T")[0],
-          total: purchase.replacedBy.total.toNumber(),
-        }
+        id: purchase.replacedBy.id,
+        invoiceNo: purchase.replacedBy.invoiceNo,
+        purchaseDate: purchase.replacedBy.purchaseDate.toISOString().split("T")[0],
+        total: purchase.replacedBy.total.toNumber(),
+      }
       : null,
     createdAt: purchase.createdAt.toISOString(),
     items: itemsWithComparison,

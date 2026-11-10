@@ -1,87 +1,238 @@
 import React from "react";
 import Link from "next/link";
+import {
+  Sparkle,
+  Truck,
+  Storefront,
+  ShieldCheck,
+  WhatsappLogo,
+  ArrowRight,
+  Package,
+} from "@phosphor-icons/react/dist/ssr";
+import { getFeaturedProducts, getStapleProducts } from "@/server/public/products";
+import { getPublicCategories } from "@/server/public/categories";
+import { ProductCard } from "@/components/store/ProductCard";
+import { CategoryStrip } from "@/components/store/CategoryStrip";
 import { CategoryIcon } from "@/components/shared/CategoryIcon";
-import { copy } from "@/lib/copy";
-import { shopSeedConfig } from "../../../config/shop.seed";
+import { prisma } from "@/server/db";
 
-export default function StorefrontHomePage() {
-  const categories = [
-    { name: "Rice & Grains", slug: "rice-and-grains", iconKey: "grains", tint: "#EBF2ED" },
-    { name: "Pulses & Dals", slug: "pulses-and-dals", iconKey: "pulses", tint: "#FDF6E9" },
-    { name: "Oils & Ghee", slug: "oils-and-ghee", iconKey: "oils", tint: "#FEF9E7" },
-    { name: "Spices & Masala", slug: "spices-and-masala", iconKey: "spices", tint: "#FBEFEF" },
-    { name: "Snacks & Biscuits", slug: "snacks-and-biscuits", iconKey: "snacks", tint: "#F8F3EA" },
-    { name: "Tea & Beverages", slug: "tea-coffee-beverages", iconKey: "beverages", tint: "#F3EFEA" },
-    { name: "Dairy & Eggs", slug: "dairy-and-eggs", iconKey: "dairy", tint: "#F5F9F6" },
-    { name: "Household Care", slug: "household-and-personal-care", iconKey: "household", tint: "#EBF1F5" },
-  ];
+export const metadata = {
+  title: "Pandian Store — Fresh Groceries Delivered in Madurai",
+  description:
+    "Order quality dal, rice, cooking oils, spices, and daily household groceries for home delivery or store pickup in Madurai.",
+};
+
+export default async function StoreHomePage() {
+  const [categories, featuredProducts, stapleProducts, shopSettings] =
+    await Promise.all([
+      getPublicCategories(),
+      getFeaturedProducts(8),
+      getStapleProducts(12),
+      prisma.shopSettings.findFirst({ where: { id: 1 } }),
+    ]);
+
+  const isAccepting = shopSettings ? shopSettings.acceptingOrders : true;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 space-y-6 sm:space-y-8">
-      {/* 1. Shop notes band (Section 11) */}
-      <div className="bg-surface rounded-lg p-3.5 sm:p-4 border border-border shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-          <span className="font-medium text-ink">Accepting orders</span>
-          <span className="text-muted">· {shopSeedConfig.hoursText}</span>
-        </div>
-        <div className="flex items-center gap-4 text-muted">
-          <span>Min order: ₹{shopSeedConfig.minOrderAmount}</span>
-          <span>Delivery within 3 km</span>
-        </div>
-      </div>
+    <div className="space-y-8">
+      {/* Category Strip */}
+      <CategoryStrip categories={categories} />
 
-      {/* 2. Shop by Category (Section 11) */}
-      <section id="categories" className="space-y-3">
+      {/* Hero Welcome Banner */}
+      <section className="max-w-7xl mx-auto px-4">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-leaf-dark via-leaf to-leaf p-6 sm:p-10 text-white shadow-sm">
+          <div className="relative z-10 max-w-2xl space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full bg-turmeric/20 px-3 py-1 text-xs font-bold text-turmeric border border-turmeric/30">
+              <Sparkle size={14} weight="fill" />
+              <span>மதுரையின் குடும்ப மளிகை கடை</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight font-heading leading-tight">
+              Fresh, Quality Groceries at Wholesale-Fair Prices
+            </h1>
+
+            <p className="text-sm sm:text-base text-white/85 leading-relaxed">
+              Order your monthly provisions, premium dals, Ponni rice, wood-pressed oils, and spices.
+              Fast home delivery across Madurai or pick up ready bags at our store.
+            </p>
+
+            {/* Shop Order Status */}
+            <div className="pt-2 flex flex-wrap items-center gap-3">
+              {isAccepting ? (
+                <div className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-xs font-semibold backdrop-blur-xs">
+                  <span className="h-2 w-2 rounded-full bg-turmeric animate-pulse" />
+                  <span>Taking orders now · Delivery today</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 rounded-md bg-turmeric text-ink px-3 py-1.5 text-xs font-bold">
+                  <span>Shop is currently closed for new orders. Opening soon!</span>
+                </div>
+              )}
+
+              <a
+                href="#categories"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-turmeric transition-colors ml-1"
+              >
+                <span>Browse categories</span>
+                <ArrowRight size={14} weight="bold" />
+              </a>
+            </div>
+          </div>
+
+          {/* Decorative Background Pattern */}
+          <div className="absolute right-0 bottom-0 top-0 w-1/3 opacity-10 pointer-events-none hidden lg:flex items-center justify-center">
+            <Storefront size={280} weight="thin" />
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badges Bar */}
+      <section className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-surface border border-border shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-turmeric/20 text-leaf flex items-center justify-center shrink-0">
+              <Truck size={20} weight="bold" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-ink">Free Home Delivery</div>
+              <div className="text-[11px] text-ink-muted">On all Madurai orders above ₹500</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-surface border border-border shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-leaf/10 text-leaf flex items-center justify-center shrink-0">
+              <ShieldCheck size={20} weight="bold" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-ink">Clean & Unadulterated</div>
+              <div className="text-[11px] text-ink-muted">Hand-checked pulses, grains & spices</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-surface border border-border shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-turmeric/20 text-ink flex items-center justify-center shrink-0">
+              <Storefront size={20} weight="bold" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-ink">Store Pickup Ready</div>
+              <div className="text-[11px] text-ink-muted">Skip the queue — packed and waiting</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Categories Grid Section */}
+      <section id="categories" className="max-w-7xl mx-auto px-4 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight text-ink">
-            Shop by category
-          </h2>
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold font-heading text-ink">
+              Shop by Category
+            </h2>
+            <p className="text-xs text-ink-muted">
+              Choose from our complete grocery sections
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 sm:gap-3">
-          {categories.map((cat) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {categories.map((c) => (
             <Link
-              key={cat.slug}
-              href={`/c/${cat.slug}`}
-              className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-lg border border-border hover:border-leaf/40 hover:shadow-xs transition-all text-center group"
-              style={{ backgroundColor: cat.tint }}
+              key={c.id}
+              href={`/c/${c.slug}`}
+              className="group flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-surface hover:border-leaf/50 hover:shadow-xs transition-all text-center"
             >
-              <div className="w-12 h-12 rounded-full bg-surface/80 flex items-center justify-center text-leaf group-hover:scale-105 transition-transform mb-2">
-                <CategoryIcon iconKey={cat.iconKey} size={26} weight="regular" />
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform duration-200 group-hover:scale-110"
+                style={{ backgroundColor: c.tint || "#EBF2ED" }}
+              >
+                <CategoryIcon iconKey={c.iconKey} size={24} className="text-leaf" />
               </div>
-              <span className="text-xs sm:text-sm font-semibold text-ink line-clamp-2">
-                {cat.name}
+              <span className="font-semibold text-xs text-ink group-hover:text-leaf transition-colors line-clamp-1">
+                {c.name}
+              </span>
+              <span className="text-[10px] text-ink-muted mt-0.5">
+                {c.productCount} {c.productCount === 1 ? "item" : "items"}
               </span>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* 3. Welcome / Shop Banner */}
-      <section className="bg-leaf text-white rounded-xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xs">
-        <div className="space-y-2 max-w-2xl">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            {copy.shop.name}
-          </h1>
-          <p className="text-sm sm:text-base text-white/80 leading-relaxed font-tamil">
-            உயர்தர அரிசி, பருப்பு வகைகள், நல்லெண்ணெய், சமையல் மளிகைப் பொருட்கள் நியாயமான விலையில் உங்கள் இல்லம் தேடி வரும்.
-          </p>
-          <p className="text-xs text-white/70">
-            Order groceries online from home. Fast delivery across town or convenient shop pickup. Pay on delivery by cash or UPI.
-          </p>
+      {/* Featured Products Carousel / Grid */}
+      {featuredProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="inline-flex items-center gap-1 text-[11px] font-bold text-leaf uppercase tracking-wider">
+                <Sparkle size={12} weight="fill" />
+                Special Picks
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold font-heading text-ink">
+                Featured Groceries
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            {featuredProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Daily Staples Grid */}
+      <section className="max-w-7xl mx-auto px-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold font-heading text-ink">
+              Daily Kitchen Staples (அத்தியாவசிய பொருட்கள்)
+            </h2>
+            <p className="text-xs text-ink-muted">
+              Pappu, ponni rice, gingelly oil, mustard, chili & spices
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/search"
-            className="bg-turmeric text-ink font-semibold px-5 py-2.5 rounded-md hover:bg-turmeric-hover transition-colors text-sm min-h-[44px] flex items-center justify-center"
-          >
-            Browse all items
-          </Link>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+          {stapleProducts.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      </section>
+
+      {/* WhatsApp Grocery List Helper Banner */}
+      <section className="max-w-7xl mx-auto px-4 pb-4">
+        <div className="rounded-2xl border border-border bg-turmeric/10 p-5 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <WhatsappLogo size={28} weight="fill" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-ink">
+                Prefer to send your grocery list on WhatsApp?
+              </h3>
+              <p className="text-xs text-ink-muted mt-0.5">
+                Take a photo of your handwritten paper list or send a voice note. We will pack it for you!
+              </p>
+            </div>
+          </div>
+
+          {shopSettings?.whatsapp && (
+            <a
+              href={`https://wa.me/${shopSettings.whatsapp.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                "வணக்கம் பாண்டியா ஸ்டோர்! மளிகை பட்டியல் அனுப்ப விரும்புகிறேன்."
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white px-5 py-2.5 rounded-lg text-xs font-bold transition-colors shrink-0 shadow-xs active:scale-95"
+            >
+              <WhatsappLogo size={18} weight="fill" />
+              <span>Send Grocery List</span>
+            </a>
+          )}
         </div>
       </section>
     </div>
   );
 }
-

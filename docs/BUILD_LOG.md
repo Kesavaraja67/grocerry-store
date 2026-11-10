@@ -154,35 +154,123 @@
 
 ## Phase 5 — Storefront
 
-**Status:** PENDING
+**Status:** COMPLETE
+
+**Deliverables:**
+- [x] Public DTO layer (`src/server/public/`):
+  - `src/server/public/products.ts`: Explicit field projection omitting all cost, supplier, and purchase columns; `getFeaturedProducts`, `getStapleProducts`, `getProductsByCategory`, `getProductBySlug` with related items
+  - `src/server/public/categories.ts`: `getPublicCategories` with active product counts
+  - `src/server/public/search.ts`: Live debounced product and category suggestions query
+  - `src/server/public/cart.ts`: Server-side cart verification and re-pricing engine rejecting client prices and validating unit step boundaries
+  - `src/server/public/orders.ts`: Single-page guest order placement with idempotency key, anti-bot honeypot check, order number generation (PS-1001), order events log, and public tracking lookup
+- [x] Client State & Navigation (`src/context/CartContext.tsx` & `src/components/store/`):
+  - `CartProvider`: Persistent localStorage cart with reactive count badge and step-aware quantity modifications
+  - `StoreHeader`: Responsive top navigation with utility bar, brand mark, search input, live cart badge, and track order shortcut
+  - `StoreSearchInput`: Search input with live suggestion dropdown for matching products & categories
+  - `CategoryStrip`: Horizontal category pill carousel with canonical Phosphor icons
+  - `ProductCard`: Touch-optimized product card with Tamil names, unit pricing, savings badge, and interactive add-to-cart stepper (`− qty +`)
+  - `MobileBottomNav`: Bottom navigation bar with live cart count badge
+- [x] Storefront Pages (`src/app/(store)/`):
+  - `/`: Storefront homepage with hero welcome, shop open/pause indicator, trust badges, category grid, featured products, kitchen staples, and direct WhatsApp list order banner
+  - `/c/[slug]`: Category catalog with sort options (featured, price asc/desc, name A-Z)
+  - `/p/[slug]`: Product details page with image gallery, unit selectors, quick picks (250g, 500g, 1kg), sticky mobile add bar, and JSON-LD schema
+  - `/search`: Full search results page with keyword matching
+  - `/cart`: Cart review with free delivery progress bar, quantity steppers, and order summary
+  - `/checkout`: Single-page guest checkout (Home Delivery or Store Pickup, Indian 10-digit mobile validation, cash/UPI on delivery notice)
+  - `/order-success/[orderNumber]`: Order confirmation screen with WhatsApp confirmation shortcut
+  - `/track`: Real-time order progress stepper and event history
+  - `/contact`: Store location, timings, and payment options
+  - `src/app/robots.ts` & `src/app/sitemap.ts`: Search engine crawling rules and dynamic XML sitemap
+- [x] Privacy Boundary Integration Test (`tests/integration/privacy-boundary.test.ts`):
+  - 4 automated tests verifying that public DTOs, search suggestions, cart verifications, and tracking queries contain zero internal cost, markup, or supplier keys
+
+**Gate Verification:**
+- `npm run typecheck`: 0 errors (green)
+- `npm run lint`: 0 errors (green)
+- `npm test`: 38 passed (green)
 
 ---
 
 ## Phase 6 — Order Management
 
-**Status:** PENDING
+**Status:** COMPLETE
+
+**Deliverables:**
+- [x] Admin order server actions (`src/server/admin/orders.ts`):
+  - `getAdminOrders`: Status-filtered orders list with search, pagination, and real-time status counts for all filter tabs
+  - `getAdminOrderById`: Detailed order view with customer info, snapshots, items with admin margin/cost inspection, and event log
+  - `acceptOrder`: State machine transition (`PLACED` -> `ACCEPTED`), real-time stock deduction, `StockMovement` (`ORDER_ACCEPTED`) creation, and `OrderItemCost` snapshot
+  - `updateOrderStatus`: Legal state transitions (`ACCEPTED` -> `PROCESSING` -> `READY` -> `COMPLETED`) with `OrderEvent` logging
+  - `cancelOrRejectOrder`: Order cancellation with automatic inventory restoration (`ORDER_RESTORED`) if already accepted, and rejection reasons for placed orders
+  - `modifyOrderItemsBeforeAccept`: Allows owner to adjust quantities or remove items before accepting, recalculating subtotal and total
+  - `getOrderWhatsAppUrl`: Pre-composed WhatsApp message generator with order summary and status
+- [x] Order Management UI:
+  - `/admin/orders`: Orders list with 7 status tabs with live count badges, fulfilment filter (Delivery vs Pickup), search bar, desktop table, mobile touch cards, and contextual action buttons
+  - `/admin/orders/[id]`: Full order details view with customer call/WhatsApp links, interactive state workflow stepper, items table with owner margin analysis and privacy masking, and adjust items modal
+  - `/admin/orders/[id]/print`: Clean A5 / thermal printable Order Slip (strictly titled "ORDER SLIP", not "Tax Invoice", hiding wholesale costs)
+- [x] Order state machine integration tests (`tests/integration/orders.test.ts`):
+  - 4 tests verifying legal transitions, illegal transition rejection, delivery threshold total calculations, quantity step validation, and WhatsApp message formatting
+
+**Gate Verification:**
+- `npm run typecheck`: 0 errors (green)
+- `npm run lint`: 0 errors (green)
+- `npm test`: 42 passed (green)
 
 ---
 
 ## Phase 7 — Polish and States
 
-**Status:** PENDING
+**Status:** COMPLETE
+
+**Deliverables:**
+- [x] Global states: `src/app/not-found.tsx` and `src/app/error.tsx` (with reset callback and bilingual English/Tamil messages)
+- [x] Storefront states: `src/app/(store)/loading.tsx` (shimmer skeletons for category strip and product grid), `src/app/(store)/not-found.tsx`, and `src/app/(store)/error.tsx`
+- [x] Admin states: `src/app/(admin)/admin/(app)/loading.tsx` (metric cards and table row shimmers), `src/app/(admin)/admin/(app)/not-found.tsx`, and `src/app/(admin)/admin/(app)/error.tsx`
+- [x] Section 13 Copy Audit: Centralized strings in `src/lib/copy.ts`, natural shop owner and family phrasing, no corporate jargon
+- [x] Accessibility & Reduced Motion: Global `@media (prefers-reduced-motion: reduce)` in `globals.css`, minimum 44px mobile touch targets, tabular numerals on monetary values
+
+**Gate Verification:**
+- `npm run typecheck`: 0 errors (green)
+- `npm run lint`: 0 errors (green)
 
 ---
 
 ## Phase 8 — Design Audit
 
-**Status:** PENDING
+**Status:** COMPLETE
+
+**Deliverables:**
+- [x] Anti-AI Slop Audit: Zero generic gradients, zero purple/indigo SaaS clichés; strict Madurai grocery palette (Leaf green `#17492F`, Golden turmeric `#F4B223`, Neutral page `#F5F7F4`)
+- [x] Phosphor icons exclusively across all screens; zero emojis used in UI
+- [x] Privacy mode styling: `.privacy-masked .privacy-target` blur filter applied when toggled via top bar
+- [x] Typography: Geist Sans + Geist Mono with Noto Sans Tamil fallback
 
 ---
 
 ## Phase 9 — Hardening
 
-**Status:** PENDING
+**Status:** COMPLETE
+
+**Deliverables:**
+- [x] Next.js production build: `npm run build` generates 100% clean production assets for all 31 routes
+- [x] Security headers: Strict CSP, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, HSTS
+- [x] Privacy boundaries verified across all public endpoints and DTOs
+- [x] Seed scripts tested: `npm run db:seed` and `npm run db:seed:demo`
+
+**Gate Verification:**
+- `npm run build`: Exit code 0 (all routes compiled and generated)
+- `npm test`: 42 passed (green)
 
 ---
 
 ## Phase 10 — Handover
 
-**Status:** PENDING
+**Status:** COMPLETE
+
+**Deliverables:**
+- [x] `docs/ADMIN_GUIDE.md`: Comprehensive shop owner manual in plain English and Tamil
+- [x] `docs/HANDOVER.md`: Technical handover, environment variables, deployment instructions, architecture and privacy guarantees
+- [x] `docs/DEMO_SCRIPT.md`: Step-by-step walkthrough script for client demonstration
+- [x] `README.md`: Root project overview, feature matrix, quickstart, and verification commands
+- [x] `docs/BUILD_LOG.md`: Final build log updated with all 10 phases completed
 

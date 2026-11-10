@@ -14,3 +14,4 @@ export default async function ReportsPage() {
     </div>
   );
 }
+

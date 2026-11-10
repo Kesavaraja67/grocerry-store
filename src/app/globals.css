@@ -84,6 +84,14 @@ body {
   }
 }
 
+/* Privacy mode for owner portal wholesale costs */
+.privacy-masked .privacy-target {
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+  transition: filter 0.15s ease;
+}
+
 /* Print styling for A5 order slip (Section 10) */
 @media print {
   @page {

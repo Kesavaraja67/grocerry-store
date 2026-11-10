@@ -16,6 +16,8 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { AdminTopBar } from "./AdminTopBar";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminAppLayout({
   children,
 }: {
