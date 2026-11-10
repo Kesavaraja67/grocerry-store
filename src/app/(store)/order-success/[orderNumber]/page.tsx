@@ -164,7 +164,7 @@ export default async function OrderSuccessPage({ params }: PageProps) {
             </p>
           ) : (
             <p>
-              Pandian Store, 14 West Masi Street, Madurai (Ready for pickup in 30 mins)
+              Pandian Store, 14 West Street (Ready for pickup in 30 mins)
             </p>
           )}
           <p className="text-[11px]">Contact Mobile: +91 {order.customerPhone}</p>

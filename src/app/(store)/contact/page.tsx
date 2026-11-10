@@ -14,9 +14,9 @@ import { prisma } from "@/server/db";
 import { copy } from "@/lib/copy";
 
 export const metadata = {
-  title: "Contact & Store Location — Pandian Store Madurai",
+  title: "Contact & Store Location — Pandian Store",
   description:
-    "Visit Pandian Store on West Masi Street, Madurai. Shop opening hours, delivery areas, phone numbers, and WhatsApp list order.",
+    "Visit Pandian Store. Shop opening hours, delivery areas, phone numbers, and WhatsApp list order.",
 };
 
 export default async function ContactPage() {
@@ -27,12 +27,12 @@ export default async function ContactPage() {
   const shopName = shopSettings?.shopName || copy.shop.name;
   const phone = shopSettings?.phone || "9842100000";
   const whatsapp = shopSettings?.whatsapp || phone;
-  const addressLine = shopSettings?.addressLine || "14 West Masi Street";
-  const area = shopSettings?.area || "Near Meenakshi Amman Temple";
-  const city = shopSettings?.city || "Madurai";
-  const pincode = shopSettings?.pincode || "625001";
+  const addressLine = shopSettings?.addressLine || "14 West Street";
+  const area = shopSettings?.area || "Near Bus Stand";
+  const city = shopSettings?.city || "";
+  const pincode = shopSettings?.pincode || "600001";
   const hoursText = shopSettings?.hoursText || "Mon–Sat: 7:00 AM – 9:30 PM, Sun: 7:00 AM – 1:30 PM";
-  const deliveryNote = shopSettings?.deliveryNote || "Free home delivery in Madurai for orders above ₹500";
+  const deliveryNote = shopSettings?.deliveryNote || "Free home delivery for orders above ₹500";
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">

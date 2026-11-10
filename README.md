@@ -1,6 +1,6 @@
 # Pandian Store (பாண்டியன் ஸ்டோர்) — MVP 1.0
 
-A complete, production-quality, two-sided web platform built for a neighbourhood grocery store in Madurai, Tamil Nadu.
+A complete, production-quality, two-sided web platform built for a neighbourhood grocery store.
 
 - **Owner Portal (`/admin`)**: Wholesale purchase recording with pack conversion & proportional extra charge allocation, moving average inventory costing, selling price suggestions with MRP guards and markup/margin controls, stock adjustments ledger, and complete customer order lifecycle management with printable A5 order slips.
 - **Customer Storefront (`/`)**: Amazon-inspired but beginner-friendly grocery store with bilingual English/Tamil product search, live search suggestions, category catalog, persistent cart with free-delivery progress bar, single-page guest checkout, order tracking, and direct WhatsApp shortcuts.
@@ -63,7 +63,7 @@ npm run db:push
 # Seed master categories, units, and initial owner account
 npm run db:seed
 
-# (Optional) Seed realistic Madurai grocery demo catalog with sample purchases
+# (Optional) Seed realistic grocery demo catalog with sample purchases
 npm run db:seed:demo
 ```
 

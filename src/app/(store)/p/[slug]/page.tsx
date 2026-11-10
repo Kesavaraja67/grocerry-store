@@ -13,8 +13,8 @@ export async function generateMetadata({ params }: PageProps) {
   if (!product) return { title: "Product Not Found — Pandian Store" };
 
   return {
-    title: `${product.name} (${product.nameTamil || ""}) — Pandian Store Madurai`,
-    description: `Buy ${product.name} online at Pandian Store Madurai. ${
+    title: `${product.name} (${product.nameTamil || ""}) — Pandian Store`,
+    description: `Buy ${product.name} online at Pandian Store. ${
       product.description || "Fresh and pure groceries delivered to your home."
     }`,
   };

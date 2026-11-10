@@ -18,7 +18,7 @@ export async function getShopSettings() {
   if (!settings) {
     // If somehow not initialized, create with defaults
     settings = await prisma.shopSettings.create({
-      data: { id: 1, phone: "+91 90000 00000", addressLine: "Main Bazaar", area: "Town", city: "Madurai", pincode: "625001", hoursText: "8am - 9pm" },
+      data: { id: 1, phone: "+91 90000 00000", addressLine: "Main Bazaar", area: "Town", city: "", pincode: "600001", hoursText: "8am - 9pm" },
     });
   }
 

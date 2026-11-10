@@ -240,7 +240,7 @@
 **Status:** COMPLETE
 
 **Deliverables:**
-- [x] Anti-AI Slop Audit: Zero generic gradients, zero purple/indigo SaaS clichés; strict Madurai grocery palette (Leaf green `#17492F`, Golden turmeric `#F4B223`, Neutral page `#F5F7F4`)
+- [x] Anti-AI Slop Audit: Zero generic gradients, zero purple/indigo SaaS clichés; strict grocery palette (Leaf green `#17492F`, Golden turmeric `#F4B223`, Neutral page `#F5F7F4`)
 - [x] Phosphor icons exclusively across all screens; zero emojis used in UI
 - [x] Privacy mode styling: `.privacy-masked .privacy-target` blur filter applied when toggled via top bar
 - [x] Typography: Geist Sans + Geist Mono with Noto Sans Tamil fallback

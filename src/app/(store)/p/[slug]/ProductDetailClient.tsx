@@ -287,7 +287,7 @@ export function ProductDetailClient({ product }: Props) {
             <div className="grid grid-cols-2 gap-3 pt-2 text-xs text-ink-muted">
               <div className="flex items-center gap-2">
                 <Truck size={18} className="text-leaf shrink-0" />
-                <span>Free delivery in Madurai &gt; ₹500</span>
+                <span>Free delivery on orders &gt; ₹500</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck size={18} className="text-leaf shrink-0" />

@@ -17,9 +17,9 @@ import { CategoryIcon } from "@/components/shared/CategoryIcon";
 import { prisma } from "@/server/db";
 
 export const metadata = {
-  title: "Pandian Store — Fresh Groceries Delivered in Madurai",
+  title: "Pandian Store — Fresh Groceries Delivered to Your Doorstep",
   description:
-    "Order quality dal, rice, cooking oils, spices, and daily household groceries for home delivery or store pickup in Madurai.",
+    "Order quality dal, rice, cooking oils, spices, and daily household groceries for home delivery or store pickup.",
 };
 
 export default async function StoreHomePage() {
@@ -85,20 +85,20 @@ export default async function StoreHomePage() {
 
       {/* Hero Welcome Banner */}
       <section className="max-w-7xl mx-auto px-4">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-leaf-dark via-leaf to-leaf p-6 sm:p-10 text-white shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl bg-leaf p-6 sm:p-10 text-white shadow-sm">
           <div className="relative z-10 max-w-2xl space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full bg-turmeric/20 px-3 py-1 text-xs font-bold text-turmeric border border-turmeric/30">
               <Sparkle size={14} weight="fill" />
-              <span>மதுரையின் குடும்ப மளிகை கடை</span>
+              <span>நமது குடும்ப மளிகை கடை</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight font-heading leading-tight">
               Fresh, Quality Groceries at Wholesale-Fair Prices
             </h1>
 
-            <p className="text-sm sm:text-base text-white/85 leading-relaxed">
+            <p className="text-sm sm:text-base text-white/90 leading-relaxed">
               Order your monthly provisions, premium dals, Ponni rice, wood-pressed oils, and spices.
-              Fast home delivery across Madurai or pick up ready bags at our store.
+              Fast home delivery directly to your doorstep or pick up ready bags at our store.
             </p>
 
             {/* Shop Order Status */}
@@ -140,7 +140,7 @@ export default async function StoreHomePage() {
             </div>
             <div>
               <div className="text-xs font-bold text-ink">Free Home Delivery</div>
-              <div className="text-[11px] text-ink-muted">On all Madurai orders above ₹500</div>
+              <div className="text-[11px] text-ink-muted">On all local orders above ₹500</div>
             </div>
           </div>
 

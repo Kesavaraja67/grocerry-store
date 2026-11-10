@@ -27,12 +27,12 @@ export default async function StorefrontLayout({
     phone: shopSettings?.phone || "9842100000",
     whatsapp: shopSettings?.whatsapp || "9842100000",
     hoursText: shopSettings?.hoursText || "Mon–Sat: 7:00 AM – 9:30 PM",
-    deliveryNote: shopSettings?.deliveryNote || "Free home delivery in Madurai for orders above ₹500",
+    deliveryNote: shopSettings?.deliveryNote || "Free home delivery for orders above ₹500",
     isAcceptingOrders: shopSettings?.acceptingOrders ?? true,
-    addressLine: shopSettings?.addressLine || "14 West Masi Street",
-    area: shopSettings?.area || "Near Meenakshi Amman Temple",
-    city: shopSettings?.city || "Madurai",
-    pincode: shopSettings?.pincode || "625001",
+    addressLine: shopSettings?.addressLine || "14 West Street",
+    area: shopSettings?.area || "Near Bus Stand",
+    city: shopSettings?.city || "",
+    pincode: shopSettings?.pincode || "600001",
   };
 
   return (

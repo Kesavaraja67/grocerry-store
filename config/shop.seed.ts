@@ -31,8 +31,8 @@ export const shopSeedConfig: ShopSeedConfig = {
   whatsapp: "+91 90000 00000", // Clearly marked placeholder
   addressLine: "Shop No. 12, Main Bazaar Road", // Clearly marked placeholder
   area: "Town Centre",
-  city: "Madurai",
-  pincode: "625001",
+  city: "",
+  pincode: "600001",
   hoursText: "Monday – Sunday: 7:00 AM – 9:30 PM",
   deliveryEnabled: true,
   pickupEnabled: true,

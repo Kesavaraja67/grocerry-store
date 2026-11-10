@@ -40,7 +40,7 @@ Use this script to demonstrate the complete, end-to-end functionality of Pandian
 2. Click **"Record Purchase"**.
 3. Select supplier: **"Meenakshi Rice Mill"** (or click `+ Add Wholesale Store` to show inline addition).
 4. Add line 1:
-   - Product: **"Thanjavur Ponni Boiled Rice"** (show English + Tamil search).
+   - Product: **"Ponni Boiled Rice"** (show English + Tamil search).
    - Quantity: Use the **Pack Helper**:
      - 2 bags of 25 kg each = **50 kg**.
    - Price: Paid ₹2,400 total. Rate automatically computes to ₹48.00/kg.
@@ -84,7 +84,7 @@ Use this script to demonstrate the complete, end-to-end functionality of Pandian
 5. Proceed to `/checkout`:
    - Simple, single-page guest checkout (no confusing passwords or app downloads required).
    - Choose **Home Delivery**.
-   - Enter customer name (`Murugan`), Madurai mobile number (`9842112345`), address (`18 North Veli St, Simmakkal`).
+   - Enter customer name (`Murugan`), mobile number (`9842112345`), address (`18 North Street`).
    - Click **"Send Order Request"**.
 6. The customer receives confirmation page (`/order-success/PS-1001`) with a direct **"Send on WhatsApp"** button.
 

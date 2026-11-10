@@ -88,7 +88,7 @@ export function CheckoutForm() {
         return;
       }
       if (!/^\d{6}$/.test(pincode.trim())) {
-        setErrorMessage("Please enter a valid 6-digit Madurai pincode.");
+        setErrorMessage("Please enter a valid 6-digit postal pincode.");
         return;
       }
     }
@@ -205,7 +205,7 @@ export function CheckoutForm() {
                 </div>
                 <div className="mt-2">
                   <div className="font-bold text-sm text-ink">Home Delivery</div>
-                  <div className="text-[11px] text-ink-muted">Delivered to your doorstep in Madurai</div>
+                  <div className="text-[11px] text-ink-muted">Delivered directly to your doorstep</div>
                 </div>
               </button>
 
@@ -319,7 +319,7 @@ export function CheckoutForm() {
           {fulfilment === "DELIVERY" && (
             <div className="rounded-xl border border-border bg-surface p-5 space-y-4 shadow-xs">
               <h2 className="text-xs font-bold uppercase tracking-wider text-ink">
-                3. Delivery Address in Madurai
+                3. Delivery Address
               </h2>
 
               <div className="space-y-4">

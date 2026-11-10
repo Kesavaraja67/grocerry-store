@@ -102,7 +102,7 @@ export async function seedDemo() {
       name: "Sri Murugan Wholesale Mandi",
       phone: "+91 90000 00010",
       area: "South Gate Wholesale Market",
-      address: "No. 44, Rice Market Lane, South Gate, Madurai",
+      address: "No. 44, Rice Market Lane, South Gate",
       notes: "Primary supplier for Ponni rice, idli rice, and wholesale pulses.",
     },
   });
@@ -112,7 +112,7 @@ export async function seedDemo() {
       name: "Raja & Sons Grain Traders",
       phone: "+91 90000 00011",
       area: "Central Grain Market",
-      address: "Shop 102, Grain Merchant Complex, Madurai",
+      address: "Shop 102, Grain Merchant Complex",
       notes: "Known for premium toor dal and wheat flour bags.",
     },
   });
@@ -122,7 +122,7 @@ export async function seedDemo() {
       name: "Meenakshi Oil Mill & Agencies",
       phone: "+91 90000 00012",
       area: "Industrial Estate",
-      address: "Plot 8, Mill Road, Industrial Estate, Madurai",
+      address: "Plot 8, Mill Road, Industrial Estate",
       notes: "Direct cold-pressed gingelly oil, groundnut oil, and sunflower oil tins.",
     },
   });
@@ -132,7 +132,7 @@ export async function seedDemo() {
       name: "Evergreen FMCG Distributors",
       phone: "+91 90000 00013",
       area: "Ring Road Hub",
-      address: "Godown 3, Ring Road Logistics Park, Madurai",
+      address: "Godown 3, Ring Road Logistics Park",
       notes: "Packet tea, coffee, biscuits, soaps, and detergent cartons.",
     },
   });
@@ -187,7 +187,7 @@ export async function seedDemo() {
     // Snacks
     { name: "Marie Gold Biscuits (250g)", nameTamil: "மாரி கோல்டு பிஸ்கட்", slug: "marie-gold-biscuits-250g", catId: catSnacks.id, unitId: packet.id, sellStep: 1, min: 1, max: 10, price: 35, mrp: 38, cost: 30, stock: 50, featured: false },
     { name: "Milk Bikis Classic (200g)", nameTamil: "மில்க் பிகிஸ்", slug: "milk-bikis-classic-200g", catId: catSnacks.id, unitId: packet.id, sellStep: 1, min: 1, max: 10, price: 30, mrp: 32, cost: 26, stock: 42, featured: false },
-    { name: "Madurai Mixture (Spicy, 250g)", nameTamil: "மதுரை மிக்ஸர்", slug: "madurai-mixture-spicy-250g", catId: catSnacks.id, unitId: packet.id, sellStep: 1, min: 1, max: 6, price: 75, mrp: 85, cost: 62, stock: 18, featured: true },
+    { name: "Special Spicy Mixture (250g)", nameTamil: "கார மிக்ஸர்", slug: "special-spicy-mixture-250g", catId: catSnacks.id, unitId: packet.id, sellStep: 1, min: 1, max: 6, price: 75, mrp: 85, cost: 62, stock: 18, featured: true },
 
     // Beverages
     { name: "Chakra Gold Tea (250g)", nameTamil: "சக்ரா கோல்ட் டீ", slug: "chakra-gold-tea-250g", catId: catBeverages.id, unitId: packet.id, sellStep: 1, min: 1, max: 8, price: 165, mrp: 180, cost: 142, stock: 35, featured: true },

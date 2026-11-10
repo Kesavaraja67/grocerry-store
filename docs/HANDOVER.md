@@ -66,7 +66,7 @@ npm run db:push
 # Seed canonical master data (categories, units, shop settings, owner account)
 npm run db:seed
 
-# Optional: Seed demo dataset (realistic Madurai grocery products, suppliers, sample purchases)
+# Optional: Seed demo dataset (realistic grocery products, suppliers, sample purchases)
 npm run db:seed:demo
 ```
 

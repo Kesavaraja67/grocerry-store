@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps) {
 
   return {
     title: `${data.category.name} — Pandian Store`,
-    description: `Shop fresh ${data.category.name} at Pandian Store Madurai. Quality groceries delivered to your home.`,
+    description: `Shop fresh ${data.category.name} at Pandian Store. Quality groceries delivered to your home.`,
   };
 }
 
