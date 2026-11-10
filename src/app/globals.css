@@ -44,13 +44,18 @@
   --color-turmeric: var(--turmeric);
   --color-turmeric-hover: var(--turmeric-hover);
   --color-turmeric-text: var(--turmeric-text);
+  --color-red: var(--red);
+  --color-red-light: var(--red-light);
   --color-dealred: var(--red);
   --color-dealred-light: var(--red-light);
   --color-surface: var(--surface);
   --color-page: var(--page);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-shopborder: var(--border);
   --color-shopborder-strong: var(--border-strong);
   --color-ink: var(--ink);
+  --color-muted: var(--muted);
   --color-shopmuted: var(--muted);
   --color-primary: var(--leaf);
   --color-accent: var(--turmeric);
