@@ -1,3 +1,5 @@
+"use server";
+
 import { Decimal } from "decimal.js";
 import { prisma } from "@/server/db";
 import { verifyCart } from "./cart";

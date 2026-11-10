@@ -218,6 +218,14 @@ export async function seedDemo() {
         stockQty: item.stock,
         isPublished: true,
         isFeatured: item.featured,
+        images: {
+          create: {
+            url: `/images/products/${item.slug}.jpg`,
+            publicId: `local/${item.slug}`,
+            alt: item.name,
+            sortOrder: 0,
+          },
+        },
         cost: {
           create: {
             lastCost: item.cost,

@@ -40,9 +40,12 @@
 @theme {
   --color-leaf: var(--leaf);
   --color-leaf-hover: var(--leaf-hover);
+  --color-leaf-dark: #103521;
   --color-leaf-light: var(--leaf-light);
   --color-turmeric: var(--turmeric);
   --color-turmeric-hover: var(--turmeric-hover);
+  --color-turmeric-light: #FDF6E9;
+  --color-turmeric-dark: #946200;
   --color-turmeric-text: var(--turmeric-text);
   --color-red: var(--red);
   --color-red-light: var(--red-light);
@@ -52,15 +55,19 @@
   --color-page: var(--page);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-strong: var(--border-strong);
   --color-shopborder: var(--border);
   --color-shopborder-strong: var(--border-strong);
   --color-ink: var(--ink);
+  --color-ink-muted: var(--muted);
   --color-muted: var(--muted);
   --color-shopmuted: var(--muted);
   --color-primary: var(--leaf);
   --color-accent: var(--turmeric);
   
   --font-sans: var(--font-geist-sans), var(--font-tamil), system-ui, sans-serif;
+  --font-heading: var(--font-geist-sans), var(--font-tamil), system-ui, sans-serif;
+  --font-tamil: var(--font-tamil), "Noto Sans Tamil", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
 }
 
@@ -75,6 +82,20 @@ body {
 .tabular-nums,
 [data-tabular-nums="true"] {
   font-variant-numeric: tabular-nums;
+}
+
+/* Hide scrollbars cleanly in horizontal strips */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area padding for fixed mobile bottom bars */
+.safe-area-bottom {
+  padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
 }
 
 /* Respect reduced motion globally */

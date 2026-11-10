@@ -10,6 +10,7 @@ import {
   Clock,
   House,
   SquaresFour,
+  UserCircle,
 } from "@phosphor-icons/react";
 import { useCart } from "@/context/CartContext";
 import { StoreSearchInput } from "./StoreSearchInput";
@@ -72,7 +73,7 @@ export function StoreHeader({ shopSettings }: Props) {
             )}
             <Link
               href="/admin/login"
-              className="text-white/60 hover:text-white/90 transition-colors ml-2 text-[11px]"
+              className="text-white/85 hover:text-white transition-colors ml-2 text-[11px] font-medium"
             >
               Owner Portal
             </Link>
@@ -82,13 +83,13 @@ export function StoreHeader({ shopSettings }: Props) {
 
       {/* 2. Main Storefront Navbar */}
       <div className="sticky top-0 z-40 bg-leaf text-white shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
-          <Link href="/" className="flex flex-col shrink-0">
-            <span className="text-xl sm:text-2xl font-bold tracking-tight text-white font-heading">
+          <Link href="/" className="flex flex-col shrink-0 min-w-0">
+            <span className="text-lg sm:text-2xl font-bold tracking-tight text-white font-heading leading-tight">
               {shopSettings.shopName}
             </span>
-            <span className="text-[10px] sm:text-xs text-white/70 -mt-1 font-tamil">
+            <span className="text-[11px] sm:text-xs text-white/75 mt-0.5 leading-none font-tamil">
               பாண்டியன் ஸ்டோர்
             </span>
           </Link>
@@ -98,8 +99,17 @@ export function StoreHeader({ shopSettings }: Props) {
             <StoreSearchInput />
           </div>
 
-          {/* Actions: Track order & Cart */}
-          <div className="flex items-center gap-3">
+          {/* Actions: Admin (Mobile), Track order (Desktop) & Cart */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <Link
+              href="/admin"
+              className="md:hidden inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/25 px-3 py-2 rounded-md font-semibold text-xs min-h-[44px] transition-colors active:scale-95"
+              aria-label="Owner Admin Portal"
+            >
+              <UserCircle size={18} weight="bold" />
+              <span>Admin</span>
+            </Link>
+
             <Link
               href="/track"
               className="hidden lg:flex items-center gap-1.5 text-xs text-white/90 hover:text-white px-2.5 py-1.5 rounded-md hover:bg-white/10 transition-colors font-medium"
@@ -110,7 +120,7 @@ export function StoreHeader({ shopSettings }: Props) {
 
             <Link
               href="/cart"
-              className="flex items-center gap-2 bg-turmeric text-ink px-4 py-2 rounded-md font-bold text-sm hover:bg-turmeric-hover transition-colors min-h-[44px] shadow-xs active:scale-95"
+              className="flex items-center gap-2 bg-turmeric text-ink px-3.5 sm:px-4 py-2 rounded-md font-bold text-sm hover:bg-turmeric-hover transition-colors min-h-[44px] shadow-xs active:scale-95"
             >
               <div className="relative">
                 <ShoppingCartSimple size={20} weight="bold" />
@@ -140,25 +150,25 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Mobile Navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border flex items-center justify-around py-1.5 safe-area-bottom shadow-lg"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border grid grid-cols-4 h-16 items-center safe-area-bottom shadow-lg"
     >
       <Link
         href="/"
-        className="flex flex-col items-center justify-center py-1 px-3 min-h-[44px] min-w-[44px] text-xs text-ink-muted hover:text-leaf transition-colors"
+        className="flex flex-col items-center justify-center py-1 min-h-[44px] text-xs text-ink-muted hover:text-leaf transition-colors"
       >
         <House size={20} />
-        <span className="text-[11px] mt-0.5">Home</span>
+        <span className="text-[11px] mt-1 leading-none">Home</span>
       </Link>
       <Link
         href="/#categories"
-        className="flex flex-col items-center justify-center py-1 px-3 min-h-[44px] min-w-[44px] text-xs text-ink-muted hover:text-leaf transition-colors"
+        className="flex flex-col items-center justify-center py-1 min-h-[44px] text-xs text-ink-muted hover:text-leaf transition-colors"
       >
         <SquaresFour size={20} />
-        <span className="text-[11px] mt-0.5">Categories</span>
+        <span className="text-[11px] mt-1 leading-none">Categories</span>
       </Link>
       <Link
         href="/cart"
-        className="flex flex-col items-center justify-center py-1 px-3 min-h-[44px] min-w-[44px] text-xs text-ink-muted hover:text-leaf transition-colors relative"
+        className="flex flex-col items-center justify-center py-1 min-h-[44px] text-xs text-ink-muted hover:text-leaf transition-colors relative"
       >
         <div className="relative">
           <ShoppingCartSimple size={20} />
@@ -168,14 +178,14 @@ export function MobileBottomNav() {
             </span>
           )}
         </div>
-        <span className="text-[11px] mt-0.5">Cart</span>
+        <span className="text-[11px] mt-1 leading-none">Cart</span>
       </Link>
       <Link
         href="/track"
-        className="flex flex-col items-center justify-center py-1 px-3 min-h-[44px] min-w-[44px] text-xs text-ink-muted hover:text-leaf transition-colors"
+        className="flex flex-col items-center justify-center py-1 min-h-[44px] text-xs text-ink-muted hover:text-leaf transition-colors"
       >
         <ClockCounterClockwise size={20} />
-        <span className="text-[11px] mt-0.5">Track</span>
+        <span className="text-[11px] mt-1 leading-none">Track</span>
       </Link>
     </nav>
   );

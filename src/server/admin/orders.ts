@@ -1,3 +1,6 @@
+"use server";
+
+import "server-only";
 import { prisma } from "@/server/db";
 import { Prisma } from "@prisma/client";
 import { requireOwner } from "@/server/auth";

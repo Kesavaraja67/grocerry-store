@@ -1,3 +1,6 @@
+"use server";
+
+import "server-only";
 import { Decimal } from "decimal.js";
 import { prisma } from "@/server/db";
 import { requireOwner } from "@/server/auth";

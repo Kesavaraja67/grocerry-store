@@ -90,44 +90,44 @@ export default async function AdminAppLayout({
         {/* Mobile Bottom Navigation (Section 10) */}
         <nav
           aria-label="Admin Mobile Navigation"
-          className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border flex items-center justify-around py-1 safe-area-bottom shadow-lg"
+          className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border grid grid-cols-5 h-16 items-center safe-area-bottom shadow-lg"
         >
           <Link
             href="/admin"
-            className="flex flex-col items-center justify-center p-1 text-xs text-muted hover:text-leaf min-h-[44px] min-w-[44px]"
+            className="flex flex-col items-center justify-center p-1 text-xs text-muted hover:text-leaf min-h-[44px]"
           >
             <House size={20} />
-            <span className="text-[10px] mt-0.5">Home</span>
+            <span className="text-[10px] mt-1 leading-none">Home</span>
           </Link>
           <Link
             href="/admin/orders"
-            className="flex flex-col items-center justify-center p-1 text-xs text-muted hover:text-leaf min-h-[44px] min-w-[44px]"
+            className="flex flex-col items-center justify-center p-1 text-xs text-muted hover:text-leaf min-h-[44px]"
           >
             <ClipboardText size={20} />
-            <span className="text-[10px] mt-0.5">Orders</span>
+            <span className="text-[10px] mt-1 leading-none">Orders</span>
           </Link>
           <Link
             href="/admin/purchases/new"
-            className="flex flex-col items-center justify-center p-1 min-h-[44px] min-w-[44px] text-xs font-semibold text-ink"
+            className="flex flex-col items-center justify-center p-1 min-h-[44px] text-xs font-semibold text-ink"
           >
-            <div className="w-10 h-10 rounded-full bg-turmeric flex items-center justify-center shadow-xs -mt-3 border-2 border-surface">
+            <div className="w-10 h-10 rounded-full bg-turmeric flex items-center justify-center shadow-xs -mt-4 border-2 border-surface">
               <Receipt size={20} weight="bold" />
             </div>
-            <span className="text-[10px] mt-0.5 font-bold text-leaf">Buy</span>
+            <span className="text-[10px] mt-0.5 leading-none font-bold text-leaf">Buy</span>
           </Link>
           <Link
             href="/admin/inventory"
-            className="flex flex-col items-center justify-center p-1 text-xs text-muted hover:text-leaf min-h-[44px] min-w-[44px]"
+            className="flex flex-col items-center justify-center p-1 text-xs text-muted hover:text-leaf min-h-[44px]"
           >
             <Stack size={20} />
-            <span className="text-[10px] mt-0.5">Stock</span>
+            <span className="text-[10px] mt-1 leading-none">Stock</span>
           </Link>
           <Link
-            href="/admin/settings"
-            className="flex flex-col items-center justify-center p-1 text-xs text-muted hover:text-leaf min-h-[44px] min-w-[44px]"
+            href="/admin/products"
+            className="flex flex-col items-center justify-center p-1 text-xs text-muted hover:text-leaf min-h-[44px]"
           >
-            <Gear size={20} />
-            <span className="text-[10px] mt-0.5">More</span>
+            <Package size={20} />
+            <span className="text-[10px] mt-1 leading-none">Products</span>
           </Link>
         </nav>
       </div>

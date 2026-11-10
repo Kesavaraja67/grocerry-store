@@ -88,6 +88,9 @@ export default async function StorefrontLayout({
                 <Link href="/contact" className="hover:text-ink transition-colors mt-1 underline">
                   Store contact details & directions
                 </Link>
+                <Link href="/admin" className="hover:text-ink transition-colors underline text-ink-muted">
+                  Owner Admin Portal
+                </Link>
               </div>
             </div>
           </div>

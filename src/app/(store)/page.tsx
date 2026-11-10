@@ -97,10 +97,10 @@ export default async function StoreHomePage() {
             </p>
 
             {/* Shop Order Status */}
-            <div className="pt-2 flex flex-wrap items-center gap-3">
+            <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-3">
               {isAccepting ? (
                 <div className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-xs font-semibold backdrop-blur-xs">
-                  <span className="h-2 w-2 rounded-full bg-turmeric animate-pulse" />
+                  <span className="h-2 w-2 rounded-full bg-turmeric animate-pulse shrink-0" />
                   <span>Taking orders now · Delivery today</span>
                 </div>
               ) : (
@@ -111,7 +111,7 @@ export default async function StoreHomePage() {
 
               <a
                 href="#categories"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-turmeric transition-colors ml-1"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-turmeric transition-colors sm:ml-1"
               >
                 <span>Browse categories</span>
                 <ArrowRight size={14} weight="bold" />

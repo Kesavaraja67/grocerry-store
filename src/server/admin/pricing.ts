@@ -1,3 +1,6 @@
+"use server";
+
+import "server-only";
 import { Decimal } from "decimal.js";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db";
