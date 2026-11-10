@@ -4,17 +4,12 @@ import Link from "next/link";
 import {
   ShoppingCartSimple,
   ClockCounterClockwise,
-  Phone,
-  WhatsappLogo,
-  MapPin,
-  Clock,
   House,
   SquaresFour,
   UserCircle,
 } from "@phosphor-icons/react";
 import { useCart } from "@/context/CartContext";
 import { StoreSearchInput } from "./StoreSearchInput";
-import { copy } from "@/lib/copy";
 
 interface Props {
   shopSettings: {
@@ -32,54 +27,12 @@ export function StoreHeader({ shopSettings }: Props) {
 
   return (
     <>
-      {/* 1. Desktop Top Utility Strip */}
-      <header className="hidden md:block bg-leaf-hover text-white/90 text-xs py-2 px-4 border-b border-white/10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-1.5">
-              <Clock size={14} className="text-turmeric" />
-              <span>{shopSettings.hoursText}</span>
-            </span>
-            {shopSettings.deliveryNote && (
-              <span className="flex items-center gap-1.5">
-                <MapPin size={14} className="text-turmeric" />
-                <span>{shopSettings.deliveryNote}</span>
-              </span>
-            )}
-            {!shopSettings.isAcceptingOrders && (
-              <span className="bg-turmeric text-ink font-bold px-2 py-0.5 rounded text-[11px]">
-                Currently not accepting new orders
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <a
-              href={`tel:${shopSettings.phone.replace(/[^0-9+]/g, "")}`}
-              className="flex items-center gap-1.5 hover:text-white transition-colors"
-            >
-              <Phone size={14} className="text-turmeric" />
-              <span>{shopSettings.phone}</span>
-            </a>
-            {shopSettings.whatsapp && (
-              <a
-                href={`https://wa.me/${shopSettings.whatsapp.replace(/[^0-9]/g, "")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-[#25D366] hover:underline"
-              >
-                <WhatsappLogo size={15} weight="fill" />
-                <span>WhatsApp shop</span>
-              </a>
-            )}
-            <Link
-              href="/admin/login"
-              className="text-white/85 hover:text-white transition-colors ml-2 text-[11px] font-medium"
-            >
-              Owner Portal
-            </Link>
-          </div>
+      {/* 1. Closed Order Notice (only shown if shop temporarily paused orders) */}
+      {!shopSettings.isAcceptingOrders && (
+        <div className="bg-turmeric text-ink text-xs font-bold py-1.5 px-4 text-center">
+          Currently not accepting new orders — opening soon!
         </div>
-      </header>
+      )}
 
       {/* 2. Main Storefront Navbar */}
       <div className="sticky top-0 z-40 bg-leaf text-white shadow-xs">
@@ -108,23 +61,24 @@ export function StoreHeader({ shopSettings }: Props) {
             <StoreSearchInput />
           </div>
 
-          {/* Actions: Admin (Mobile), Track order (Desktop) & Cart */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <Link
-              href="/admin"
-              className="md:hidden inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/25 px-3 py-2 rounded-md font-semibold text-xs min-h-[44px] transition-colors active:scale-95"
-              aria-label="Owner Admin Portal"
-            >
-              <UserCircle size={18} weight="bold" />
-              <span>Admin</span>
-            </Link>
-
+          {/* Actions: Owner Portal / Admin, Track order & Cart */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             <Link
               href="/track"
-              className="hidden lg:flex items-center gap-1.5 text-xs text-white/90 hover:text-white px-2.5 py-1.5 rounded-md hover:bg-white/10 transition-colors font-medium"
+              className="hidden md:flex items-center gap-1.5 text-xs text-white/90 hover:text-white px-2.5 py-2 rounded-md hover:bg-white/10 transition-colors font-medium min-h-[44px]"
             >
               <ClockCounterClockwise size={16} />
               <span>Track order</span>
+            </Link>
+
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/25 px-3 py-2 rounded-md font-semibold text-xs min-h-[44px] transition-colors active:scale-95"
+              aria-label="Owner Admin Portal"
+            >
+              <UserCircle size={18} weight="bold" />
+              <span className="md:hidden">Admin</span>
+              <span className="hidden md:inline">Owner Portal</span>
             </Link>
 
             <Link
