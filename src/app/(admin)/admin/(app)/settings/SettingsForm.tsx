@@ -354,7 +354,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
             Update your owner login password.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <Button
             type="button"
             variant="outline"
@@ -362,6 +362,15 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           >
             Change owner password
           </Button>
+          <div className="rounded-md bg-page border border-border p-3 text-xs text-muted space-y-1 max-w-md">
+            <p className="font-semibold text-ink">MVP Default Owner Credentials</p>
+            <p className="font-mono text-[11px]">
+              Email: <span className="text-ink">owner@pandianstore.local</span>
+            </p>
+            <p className="font-mono text-[11px]">
+              Default Password: <span className="text-ink">ChangeThisPassword123!</span>
+            </p>
+          </div>
         </CardContent>
       </Card>
 

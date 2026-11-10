@@ -9,14 +9,13 @@ import {
   CheckCircle,
   WarningCircle,
   XCircle,
-  ArrowRight,
   Info,
-  SlidersHorizontal,
   Eye,
   EyeSlash,
   Sparkle,
   FloppyDisk,
   Check,
+  Receipt,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,16 +63,17 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
     currentFilters.status || "ALL"
   );
 
-  // Privacy masking state (Section 6, 12, 14)
+  // Privacy masking state
   const [isPrivacyMasked, setIsPrivacyMasked] = useState(false);
 
   // Explainer accordion toggle
   const [showExplainer, setShowExplainer] = useState(false);
 
-  // Row edit states: maps productId -> edited price string
+  // Row edit states
   const [editedPrices, setEditedPrices] = useState<Record<string, string>>({});
   const [savingProductId, setSavingProductId] = useState<string | null>(null);
   const [saveSuccessMap, setSaveSuccessMap] = useState<Record<string, boolean>>({});
+  const [feedback, setFeedback] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
   // Selection for bulk actions
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -101,16 +101,20 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
 
     const num = parseFloat(rawVal);
     if (isNaN(num) || num <= 0) {
-      alert("Please enter a valid positive selling price.");
+      setFeedback({ type: "error", text: `Enter a valid positive price for ${p.name}.` });
       return;
     }
 
     if (p.mrp && num > p.mrp) {
-      alert(`Selling price (₹${num}) cannot be greater than MRP (₹${p.mrp}).`);
+      setFeedback({
+        type: "error",
+        text: `Selling price (₹${num}) for ${p.name} cannot exceed MRP (₹${p.mrp}).`,
+      });
       return;
     }
 
     try {
+      setFeedback(null);
       setSavingProductId(p.id);
       await updateProductSellingPrice(p.id, num);
       setSaveSuccessMap((prev) => ({ ...prev, [p.id]: true }));
@@ -119,7 +123,10 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
       }, 2000);
       router.refresh();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to update price.");
+      setFeedback({
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to update price.",
+      });
     } finally {
       setSavingProductId(null);
     }
@@ -130,10 +137,14 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
     newBasis: "LATEST" | "AVERAGE"
   ) => {
     try {
+      setFeedback(null);
       await updateProductCostBasis(p.id, newBasis);
       router.refresh();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to change cost basis.");
+      setFeedback({
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to change cost basis.",
+      });
     }
   };
 
@@ -154,13 +165,22 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
   const handleBulkApplyRecommended = async () => {
     if (selectedIds.length === 0) return;
     try {
+      setFeedback(null);
       setIsBulkApplying(true);
       const res = await bulkApplyRecommendedPricing(selectedIds);
       setSelectedIds([]);
-      alert(`Successfully updated selling prices for ${res.updatedCount} products.`);
+      setFeedback({
+        type: "success",
+        text: `Updated selling prices for ${res.updatedCount} ${
+          res.updatedCount === 1 ? "product" : "products"
+        }.`,
+      });
       router.refresh();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Bulk price update failed.");
+      setFeedback({
+        type: "error",
+        text: err instanceof Error ? err.message : "Bulk price update failed.",
+      });
     } finally {
       setIsBulkApplying(false);
     }
@@ -169,33 +189,103 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
   const reviewCount = products.filter((p) => p.needsReview).length;
   const lossCount = products.filter((p) => p.isBelowCost).length;
 
+  const computeRowState = (p: PricingProductRow) => {
+    const currentEnteredPrice =
+      editedPrices[p.id] !== undefined
+        ? editedPrices[p.id]
+        : p.sellingPrice !== null
+        ? String(p.sellingPrice)
+        : "";
+
+    const parsedPrice = parseFloat(currentEnteredPrice);
+    const isEdited =
+      editedPrices[p.id] !== undefined &&
+      parseFloat(editedPrices[p.id]) !== p.sellingPrice;
+
+    let liveProfit = p.profitPerUnit;
+    let liveMarkup = p.markupPercent;
+    let liveIsBelowCost = p.isBelowCost;
+    let liveIsAboveMRP = p.isAboveMRP;
+
+    if (!isNaN(parsedPrice) && p.currentCost !== null && p.currentCost > 0) {
+      const m = calculatePriceMetrics(parsedPrice, p.currentCost, p.mrp);
+      liveProfit = m.profitPerUnit.toNumber();
+      liveMarkup = m.markupPercent.toNumber();
+      liveIsBelowCost = m.isBelowCost;
+      liveIsAboveMRP = m.isAboveMRP;
+    }
+
+    return {
+      currentEnteredPrice,
+      isEdited,
+      liveProfit,
+      liveMarkup,
+      liveIsBelowCost,
+      liveIsAboveMRP,
+    };
+  };
+
+  const renderStatusBadge = (
+    liveIsBelowCost: boolean,
+    liveIsAboveMRP: boolean,
+    needsReview: boolean
+  ) => {
+    if (liveIsBelowCost) {
+      return (
+        <Badge variant="outline" className="text-red border-red/40 bg-red/5 text-[10px] gap-1 shrink-0">
+          <XCircle size={11} weight="bold" />
+          Loss
+        </Badge>
+      );
+    }
+    if (liveIsAboveMRP) {
+      return (
+        <Badge variant="outline" className="text-red border-red/40 bg-red/5 text-[10px] gap-1 shrink-0">
+          <WarningCircle size={11} weight="bold" />
+          &gt; MRP
+        </Badge>
+      );
+    }
+    if (needsReview) {
+      return (
+        <Badge variant="outline" className="text-turmeric-dark border-turmeric/40 bg-turmeric/10 text-[10px] gap-1 shrink-0">
+          <WarningCircle size={11} weight="bold" />
+          Review
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="text-leaf border-leaf/40 bg-leaf/5 text-[10px] gap-1 shrink-0">
+        <CheckCircle size={11} weight="bold" />
+        OK
+      </Badge>
+    );
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink font-heading">
-            Selling Prices & Markup
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-ink font-heading">
+            Selling Prices &amp; Markup
           </h1>
-          <p className="text-sm text-ink-muted">
+          <p className="text-xs sm:text-sm text-ink-muted">
             Manage your shop&apos;s selling prices with profit suggestions, MRP guards, and cost change alerts.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Privacy mask toggle */}
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsPrivacyMasked(!isPrivacyMasked)}
             className="gap-1.5 text-xs text-ink-muted hover:text-ink"
-            title={isPrivacyMasked ? "Show cost and profit values" : "Mask wholesale costs from view"}
           >
             {isPrivacyMasked ? <Eye size={15} /> : <EyeSlash size={15} />}
-            {isPrivacyMasked ? "Show wholesale costs" : "Privacy mask"}
+            {isPrivacyMasked ? "Show costs" : "Privacy mask"}
           </Button>
 
-          {/* Markup explainer toggle */}
           <Button
             variant="outline"
             size="sm"
@@ -203,42 +293,62 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
             className="gap-1.5 text-xs text-leaf border-leaf/30"
           >
             <Info size={15} />
-            Markup vs Margin
+            How prices &amp; costs work
           </Button>
         </div>
       </div>
 
-      {/* Markup vs Margin Explainer Banner (Section 9.4) */}
-      {showExplainer && (
-        <Card className="p-4 bg-turmeric/10 border-turmeric/40 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-ink flex items-center gap-2">
-              <Sparkle size={18} weight="fill" className="text-leaf" />
-              Understanding Markup % vs Margin % (கடை கணக்கு விளக்கம்)
-            </h3>
-            <button
-              onClick={() => setShowExplainer(false)}
-              className="text-xs text-ink-muted hover:text-ink"
-            >
-              ✕ Close
-            </button>
+      {/* Quick Guide Banner (Always shows crisp 2-line instructions or expanded explainer) */}
+      <Card className="p-3.5 bg-leaf-light/50 border border-leaf/25 text-xs space-y-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-ink">
+          <div className="space-y-1">
+            <div>
+              <strong className="text-leaf">To change Selling Price:</strong> Type a new amount in any product&apos;s <strong>Sell Price (₹)</strong> box (or tap <strong>Rec</strong>) and click <strong>Save</strong>.
+            </div>
+            <div>
+              <strong className="text-leaf">To change Price Bought (Wholesale Cost):</strong> Open{" "}
+              <Link href="/admin/purchases" className="font-semibold text-leaf underline">
+                Wholesale Purchases
+              </Link>
+              , select the bill, and click <strong>Correct / Replace Bill</strong> so stock and average cost stay accurate.
+            </div>
           </div>
-          <p className="text-xs text-ink-muted leading-relaxed">
-            <strong>Markup</strong> is the percentage added on top of your wholesale cost:
-            <br />
-            If you bought sugar at ₹80/kg and add <strong>25% markup</strong>, your selling price is <strong>₹100</strong>.
-          </p>
-          <p className="text-xs text-ink-muted leading-relaxed">
-            <strong>Margin</strong> is the percentage of your customer&apos;s rupee that stays in your pocket as profit:
-            <br />
-            Selling at ₹100 gives you ₹20 profit. ₹20 / ₹100 = <strong>20% margin</strong>.
-            Both numbers describe the same ₹20 profit.
-          </p>
-        </Card>
+        </div>
+
+        {showExplainer && (
+          <div className="pt-2 border-t border-leaf/20 space-y-1.5 text-ink-muted leading-relaxed">
+            <p>
+              <strong>Markup %</strong> is added on top of wholesale cost: bought at ₹80 + 25% markup = <strong>₹100</strong> selling price.
+            </p>
+            <p>
+              <strong>Margin %</strong> is your profit out of the selling price: ₹20 profit / ₹100 selling price = <strong>20% margin</strong>.
+            </p>
+          </div>
+        )}
+      </Card>
+
+      {/* Feedback Banner */}
+      {feedback && (
+        <div
+          className={`p-3 rounded-lg border text-xs font-medium flex items-center justify-between gap-2 ${
+            feedback.type === "error"
+              ? "bg-red-light border-red/30 text-red"
+              : "bg-leaf-light border-leaf/30 text-leaf"
+          }`}
+        >
+          <span>{feedback.text}</span>
+          <button
+            type="button"
+            onClick={() => setFeedback(null)}
+            className="text-xs underline shrink-0"
+          >
+            Dismiss
+          </button>
+        </div>
       )}
 
       {/* Filters & Bulk Actions Toolbar */}
-      <Card className="p-4 bg-surface border-border shadow-xs space-y-3">
+      <Card className="p-3.5 sm:p-4 bg-surface border-border shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1">
@@ -248,7 +358,7 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
             />
             <Input
               type="text"
-              placeholder="Search by product name, Tamil name, brand..."
+              placeholder="Search product, Tamil name, brand..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && applyFilters()}
@@ -257,7 +367,7 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
           </div>
 
           {/* Category filter */}
-          <div className="w-full sm:w-56">
+          <div className="w-full sm:w-52">
             <select
               value={categoryId}
               onChange={(e) => {
@@ -276,14 +386,14 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
           </div>
 
           {/* Status filter tabs */}
-          <div className="flex rounded-lg border border-border p-1 bg-page/50 shrink-0">
+          <div className="grid grid-cols-3 sm:flex rounded-lg border border-border p-1 bg-page/50 shrink-0 gap-1">
             <button
               type="button"
               onClick={() => {
                 setStatus("ALL");
                 applyFilters(search, categoryId, "ALL");
               }}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+              className={`px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-md transition-colors truncate ${
                 status === "ALL"
                   ? "bg-surface text-ink shadow-xs"
                   : "text-ink-muted hover:text-ink"
@@ -297,13 +407,13 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
                 setStatus("REVIEW");
                 applyFilters(search, categoryId, "REVIEW");
               }}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+              className={`px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-md transition-colors truncate ${
                 status === "REVIEW"
                   ? "bg-surface text-turmeric-dark shadow-xs"
                   : "text-ink-muted hover:text-ink"
               }`}
             >
-              To Review ({reviewCount})
+              Review ({reviewCount})
             </button>
             <button
               type="button"
@@ -311,20 +421,20 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
                 setStatus("LOSS");
                 applyFilters(search, categoryId, "LOSS");
               }}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+              className={`px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-md transition-colors truncate ${
                 status === "LOSS"
                   ? "bg-surface text-red shadow-xs"
                   : "text-ink-muted hover:text-ink"
               }`}
             >
-              Selling at Loss ({lossCount})
+              Loss ({lossCount})
             </button>
           </div>
         </div>
 
-        {/* Bulk Action Bar */}
+        {/* Bulk Action Bar — wraps cleanly on narrow mobile viewports */}
         {selectedIds.length > 0 && (
-          <div className="flex items-center justify-between bg-leaf/10 border border-leaf/30 p-2.5 rounded-lg text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-leaf/10 border border-leaf/30 p-3 rounded-lg text-xs">
             <span className="font-semibold text-leaf">
               {selectedIds.length} {selectedIds.length === 1 ? "product" : "products"} selected
             </span>
@@ -333,18 +443,20 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
               size="sm"
               onClick={handleBulkApplyRecommended}
               disabled={isBulkApplying}
-              className="h-8 gap-1.5 font-bold text-xs"
+              className="w-full sm:w-auto h-auto min-h-[38px] py-2 px-3 gap-1.5 font-bold text-xs whitespace-normal text-center leading-snug"
             >
-              <Sparkle size={14} weight="bold" />
-              {isBulkApplying
-                ? "Applying..."
-                : "Apply Category Recommended Markup to Selected"}
+              <Sparkle size={14} weight="bold" className="shrink-0" />
+              <span>
+                {isBulkApplying
+                  ? "Applying..."
+                  : "Apply Recommended Markup to Selected"}
+              </span>
             </Button>
           </div>
         )}
       </Card>
 
-      {/* Pricing Master Table */}
+      {/* Pricing Content */}
       {products.length === 0 ? (
         <Card className="p-12 text-center bg-surface border-dashed border-border/80">
           <CurrencyInr size={48} className="mx-auto text-ink-muted mb-3 opacity-60" />
@@ -354,239 +466,381 @@ export function PricingManager({ products, categories, currentFilters }: Props) 
           </p>
         </Card>
       ) : (
-        <div className="rounded-lg border border-border bg-surface overflow-x-auto shadow-xs">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-page/60 hover:bg-page/60">
-                <TableHead className="w-[40px]">
-                  <input
-                    type="checkbox"
-                    checked={
-                      products.length > 0 && selectedIds.length === products.length
-                    }
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-border text-leaf focus:ring-leaf"
-                  />
-                </TableHead>
-                <TableHead className="min-w-[180px]">Product</TableHead>
-                <TableHead className="w-[120px]">Category</TableHead>
-                <TableHead className="w-[110px]">Cost Basis</TableHead>
-                <TableHead className="text-right w-[100px]">Cost / Unit</TableHead>
-                <TableHead className="text-right w-[90px]">Markup %</TableHead>
-                <TableHead className="text-right w-[130px]">Selling Price</TableHead>
-                <TableHead className="text-right w-[100px]">Profit / Unit</TableHead>
-                <TableHead className="text-right w-[90px]">MRP</TableHead>
-                <TableHead className="w-[110px]">Status</TableHead>
-                <TableHead className="text-right w-[80px]">Save</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((p) => {
-                const currentEnteredPrice =
-                  editedPrices[p.id] !== undefined
-                    ? editedPrices[p.id]
-                    : p.sellingPrice !== null
-                    ? String(p.sellingPrice)
-                    : "";
+        <>
+          {/* Mobile Cards View (< md): zero horizontal clipping, full inline edit */}
+          <div className="md:hidden space-y-3">
+            <div className="flex items-center justify-between px-1 text-xs text-ink-muted">
+              <label className="inline-flex items-center gap-2 font-medium cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={products.length > 0 && selectedIds.length === products.length}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="h-4 w-4 rounded border-border text-leaf focus:ring-leaf"
+                />
+                <span>Select all ({products.length})</span>
+              </label>
+              <span>Tap any box to edit</span>
+            </div>
 
-                const parsedPrice = parseFloat(currentEnteredPrice);
-                const isEdited =
-                  editedPrices[p.id] !== undefined &&
-                  parseFloat(editedPrices[p.id]) !== p.sellingPrice;
+            {products.map((p) => {
+              const {
+                currentEnteredPrice,
+                isEdited,
+                liveProfit,
+                liveMarkup,
+                liveIsBelowCost,
+                liveIsAboveMRP,
+              } = computeRowState(p);
 
-                // Live recalculation if user changed input
-                let liveProfit = p.profitPerUnit;
-                let liveMarkup = p.markupPercent;
-                let liveIsBelowCost = p.isBelowCost;
-                let liveIsAboveMRP = p.isAboveMRP;
-
-                if (!isNaN(parsedPrice) && p.currentCost !== null && p.currentCost > 0) {
-                  const m = calculatePriceMetrics(parsedPrice, p.currentCost, p.mrp);
-                  liveProfit = m.profitPerUnit.toNumber();
-                  liveMarkup = m.markupPercent.toNumber();
-                  liveIsBelowCost = m.isBelowCost;
-                  liveIsAboveMRP = m.isAboveMRP;
-                }
-
-                return (
-                  <TableRow
-                    key={p.id}
-                    className={`hover:bg-page/40 transition-colors ${
-                      liveIsBelowCost
-                        ? "bg-red/5"
-                        : p.needsReview
-                        ? "bg-turmeric/5"
-                        : ""
-                    }`}
-                  >
-                    <TableCell>
+              return (
+                <Card
+                  key={p.id}
+                  className={`p-3.5 space-y-3 border transition-colors ${
+                    liveIsBelowCost
+                      ? "bg-red/5 border-red/30"
+                      : p.needsReview
+                      ? "bg-turmeric/5 border-turmeric/40"
+                      : "bg-surface border-border"
+                  }`}
+                >
+                  {/* Card Top: Checkbox + Name + Status */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2.5 min-w-0">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(p.id)}
                         onChange={() => handleToggleSelect(p.id)}
-                        className="rounded border-border text-leaf focus:ring-leaf"
+                        className="mt-1 h-4 w-4 rounded border-border text-leaf focus:ring-leaf shrink-0"
                       />
-                    </TableCell>
+                      <div className="min-w-0">
+                        <Link
+                          href={`/admin/products/${p.id}`}
+                          className="font-semibold text-sm text-ink hover:text-leaf block truncate"
+                        >
+                          {p.name}
+                        </Link>
+                        {p.nameTamil && (
+                          <div className="text-xs text-ink-muted font-tamil truncate">
+                            {p.nameTamil}
+                          </div>
+                        )}
+                        <div className="text-[11px] text-ink-muted">{p.categoryName}</div>
+                      </div>
+                    </div>
+                    {renderStatusBadge(liveIsBelowCost, liveIsAboveMRP, p.needsReview)}
+                  </div>
 
-                    <TableCell>
-                      <Link
-                        href={`/admin/products/${p.id}`}
-                        className="font-semibold text-sm text-ink hover:text-leaf underline-offset-2 hover:underline transition-colors"
-                      >
-                        {p.name}
-                      </Link>
-                      {p.nameTamil && (
-                        <div className="text-xs text-ink-muted font-tamil">
-                          {p.nameTamil}
-                        </div>
-                      )}
-                    </TableCell>
-
-                    <TableCell className="text-xs text-ink-muted">
-                      {p.categoryName}
-                    </TableCell>
-
-                    <TableCell>
+                  {/* Cost & Profit Strip */}
+                  <div className="grid grid-cols-3 gap-2 rounded-md bg-page/70 p-2.5 text-xs border border-border/60">
+                    <div>
+                      <div className="text-[10px] text-ink-muted">Bought Cost</div>
+                      <div className="font-mono font-bold text-ink">
+                        {isPrivacyMasked
+                          ? "••••"
+                          : p.currentCost !== null
+                          ? formatINR(p.currentCost)
+                          : "—"}
+                      </div>
                       <select
                         value={p.costBasis}
                         onChange={(e) =>
-                          handleToggleCostBasis(
-                            p,
-                            e.target.value as "LATEST" | "AVERAGE"
-                          )
+                          handleToggleCostBasis(p, e.target.value as "LATEST" | "AVERAGE")
                         }
-                        className="h-7 text-[11px] rounded border border-border bg-surface px-1.5 text-ink focus:outline-none focus:ring-1 focus:ring-leaf font-medium"
-                        title="Cost basis used for calculating margins"
+                        className="mt-1 h-6 text-[10px] rounded border border-border bg-surface px-1 text-ink w-full"
                       >
                         <option value="LATEST">Latest</option>
                         <option value="AVERAGE">Average</option>
                       </select>
-                    </TableCell>
+                    </div>
 
-                    <TableCell className="text-right font-mono text-xs text-ink">
-                      {isPrivacyMasked
-                        ? "••••"
-                        : p.currentCost !== null
-                        ? formatINR(p.currentCost)
-                        : "—"}
-                    </TableCell>
-
-                    <TableCell className="text-right font-mono text-xs">
-                      {liveMarkup !== null ? (
-                        <span
-                          className={`font-semibold ${
-                            liveIsBelowCost ? "text-red" : "text-ink"
-                          }`}
-                        >
-                          {liveMarkup}%
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="text-xs text-ink-muted">₹</span>
-                        <Input
-                          type="number"
-                          step="any"
-                          value={currentEnteredPrice}
-                          onChange={(e) => handlePriceChange(p.id, e.target.value)}
-                          placeholder="Set price"
-                          className={`h-8 w-24 text-right font-mono text-xs font-bold ${
-                            isEdited
-                              ? "border-turmeric focus:ring-turmeric bg-turmeric/10"
-                              : ""
-                          }`}
-                        />
+                    <div>
+                      <div className="text-[10px] text-ink-muted">Profit / Unit</div>
+                      <div
+                        className={`font-mono font-bold ${
+                          liveProfit !== null && liveProfit < 0 ? "text-red" : "text-leaf"
+                        }`}
+                      >
+                        {isPrivacyMasked
+                          ? "••••"
+                          : liveProfit !== null
+                          ? formatINR(liveProfit)
+                          : "—"}
                       </div>
-                      {/* Suggestion chip quick pick */}
-                      {p.suggestedRecommendedPrice !== null && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handlePriceChange(
-                              p.id,
-                              String(p.suggestedRecommendedPrice)
+                      <div className="text-[10px] text-ink-muted font-mono mt-0.5">
+                        {liveMarkup !== null ? `+${liveMarkup}%` : ""}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] text-ink-muted">MRP</div>
+                      <div className="font-mono font-semibold text-ink">
+                        {p.mrp !== null ? formatINR(p.mrp) : "—"}
+                      </div>
+                      <Link
+                        href={`/admin/products/${p.id}`}
+                        className="text-[10px] text-leaf underline inline-flex items-center gap-0.5 mt-1"
+                      >
+                        <Receipt size={10} />
+                        Bills
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Selling Price Input + Suggestion + Save */}
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-semibold text-ink">Sell Price (₹)</span>
+                        {p.suggestedRecommendedPrice !== null && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handlePriceChange(p.id, String(p.suggestedRecommendedPrice))
+                            }
+                            className="text-leaf font-semibold underline"
+                          >
+                            Use Rec: ₹{p.suggestedRecommendedPrice}
+                          </button>
+                        )}
+                      </div>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={currentEnteredPrice}
+                        onChange={(e) => handlePriceChange(p.id, e.target.value)}
+                        placeholder="Enter ₹ price"
+                        className={`h-10 font-mono text-sm font-bold ${
+                          isEdited ? "border-turmeric bg-turmeric/10" : ""
+                        }`}
+                      />
+                    </div>
+
+                    {saveSuccessMap[p.id] ? (
+                      <div className="h-10 px-3 rounded-md bg-leaf-light text-leaf flex items-center gap-1 text-xs font-bold shrink-0">
+                        <Check size={14} weight="bold" /> Saved
+                      </div>
+                    ) : (
+                      <Button
+                        variant={isEdited ? "turmeric" : "outline"}
+                        size="sm"
+                        disabled={!isEdited || savingProductId === p.id}
+                        onClick={() => handleSavePrice(p)}
+                        className="h-10 px-3.5 font-semibold text-xs gap-1.5 shrink-0"
+                      >
+                        <FloppyDisk size={15} />
+                        <span>{savingProductId === p.id ? "..." : "Save"}</span>
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table View (>= md) */}
+          <div className="hidden md:block rounded-lg border border-border bg-surface overflow-x-auto shadow-xs">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-page/60 hover:bg-page/60">
+                  <TableHead className="w-[40px]">
+                    <input
+                      type="checkbox"
+                      checked={
+                        products.length > 0 && selectedIds.length === products.length
+                      }
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="rounded border-border text-leaf focus:ring-leaf"
+                    />
+                  </TableHead>
+                  <TableHead className="min-w-[180px]">Product</TableHead>
+                  <TableHead className="w-[120px]">Category</TableHead>
+                  <TableHead className="w-[110px]">Cost Basis</TableHead>
+                  <TableHead className="text-right w-[100px]">Bought Cost</TableHead>
+                  <TableHead className="text-right w-[90px]">Markup %</TableHead>
+                  <TableHead className="text-right w-[130px]">Selling Price</TableHead>
+                  <TableHead className="text-right w-[100px]">Profit / Unit</TableHead>
+                  <TableHead className="text-right w-[90px]">MRP</TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
+                  <TableHead className="text-right w-[80px]">Save</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((p) => {
+                  const {
+                    currentEnteredPrice,
+                    isEdited,
+                    liveProfit,
+                    liveMarkup,
+                    liveIsBelowCost,
+                    liveIsAboveMRP,
+                  } = computeRowState(p);
+
+                  return (
+                    <TableRow
+                      key={p.id}
+                      className={`hover:bg-page/40 transition-colors ${
+                        liveIsBelowCost
+                          ? "bg-red/5"
+                          : p.needsReview
+                          ? "bg-turmeric/5"
+                          : ""
+                      }`}
+                    >
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(p.id)}
+                          onChange={() => handleToggleSelect(p.id)}
+                          className="rounded border-border text-leaf focus:ring-leaf"
+                        />
+                      </TableCell>
+
+                      <TableCell>
+                        <Link
+                          href={`/admin/products/${p.id}`}
+                          className="font-semibold text-sm text-ink hover:text-leaf underline-offset-2 hover:underline transition-colors"
+                        >
+                          {p.name}
+                        </Link>
+                        {p.nameTamil && (
+                          <div className="text-xs text-ink-muted font-tamil">
+                            {p.nameTamil}
+                          </div>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="text-xs text-ink-muted">
+                        {p.categoryName}
+                      </TableCell>
+
+                      <TableCell>
+                        <select
+                          value={p.costBasis}
+                          onChange={(e) =>
+                            handleToggleCostBasis(
+                              p,
+                              e.target.value as "LATEST" | "AVERAGE"
                             )
                           }
-                          className="text-[10px] text-ink-muted hover:text-leaf underline block text-right mt-0.5"
-                          title="Click to apply recommended markup"
+                          className="h-7 text-[11px] rounded border border-border bg-surface px-1.5 text-ink focus:outline-none focus:ring-1 focus:ring-leaf font-medium"
                         >
-                          Rec: ₹{p.suggestedRecommendedPrice}
-                        </button>
-                      )}
-                    </TableCell>
+                          <option value="LATEST">Latest</option>
+                          <option value="AVERAGE">Average</option>
+                        </select>
+                      </TableCell>
 
-                    <TableCell className="text-right font-mono text-xs">
-                      {isPrivacyMasked ? (
-                        "••••"
-                      ) : liveProfit !== null ? (
-                        <span
-                          className={`font-semibold ${
-                            liveProfit < 0 ? "text-red" : "text-leaf"
-                          }`}
+                      <TableCell className="text-right font-mono text-xs text-ink">
+                        <div>
+                          {isPrivacyMasked
+                            ? "••••"
+                            : p.currentCost !== null
+                            ? formatINR(p.currentCost)
+                            : "—"}
+                        </div>
+                        <Link
+                          href={`/admin/products/${p.id}`}
+                          className="text-[10px] text-leaf hover:underline font-sans"
                         >
-                          {formatINR(liveProfit)}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
+                          View bills
+                        </Link>
+                      </TableCell>
 
-                    <TableCell className="text-right font-mono text-xs text-ink-muted">
-                      {p.mrp !== null ? formatINR(p.mrp) : "—"}
-                    </TableCell>
+                      <TableCell className="text-right font-mono text-xs">
+                        {liveMarkup !== null ? (
+                          <span
+                            className={`font-semibold ${
+                              liveIsBelowCost ? "text-red" : "text-ink"
+                            }`}
+                          >
+                            {liveMarkup}%
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
 
-                    <TableCell>
-                      {liveIsBelowCost ? (
-                        <Badge variant="outline" className="text-red border-red/40 bg-red/5 text-[10px] gap-1">
-                          <XCircle size={11} weight="bold" />
-                          Loss
-                        </Badge>
-                      ) : liveIsAboveMRP ? (
-                        <Badge variant="outline" className="text-red border-red/40 bg-red/5 text-[10px] gap-1">
-                          <WarningCircle size={11} weight="bold" />
-                          &gt; MRP
-                        </Badge>
-                      ) : p.needsReview ? (
-                        <Badge variant="outline" className="text-turmeric-dark border-turmeric/40 bg-turmeric/10 text-[10px] gap-1">
-                          <WarningCircle size={11} weight="bold" />
-                          Review
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-leaf border-leaf/40 bg-leaf/5 text-[10px] gap-1">
-                          <CheckCircle size={11} weight="bold" />
-                          OK
-                        </Badge>
-                      )}
-                    </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="text-xs text-ink-muted">₹</span>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={currentEnteredPrice}
+                            onChange={(e) => handlePriceChange(p.id, e.target.value)}
+                            placeholder="Set price"
+                            className={`h-8 w-24 text-right font-mono text-xs font-bold ${
+                              isEdited
+                                ? "border-turmeric focus:ring-turmeric bg-turmeric/10"
+                                : ""
+                            }`}
+                          />
+                        </div>
+                        {p.suggestedRecommendedPrice !== null && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handlePriceChange(
+                                p.id,
+                                String(p.suggestedRecommendedPrice)
+                              )
+                            }
+                            className="text-[10px] text-ink-muted hover:text-leaf underline block text-right mt-0.5 ml-auto"
+                            title="Click to apply recommended markup"
+                          >
+                            Rec: ₹{p.suggestedRecommendedPrice}
+                          </button>
+                        )}
+                      </TableCell>
 
-                    <TableCell className="text-right">
-                      {saveSuccessMap[p.id] ? (
-                        <span className="text-leaf inline-flex items-center gap-0.5 text-xs font-bold">
-                          <Check size={14} weight="bold" /> Saved
-                        </span>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={!isEdited || savingProductId === p.id}
-                          onClick={() => handleSavePrice(p)}
-                          className="h-8 px-2 text-xs"
-                          title="Save price change"
-                        >
-                          <FloppyDisk size={15} />
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+                      <TableCell className="text-right font-mono text-xs">
+                        {isPrivacyMasked ? (
+                          "••••"
+                        ) : liveProfit !== null ? (
+                          <span
+                            className={`font-semibold ${
+                              liveProfit < 0 ? "text-red" : "text-leaf"
+                            }`}
+                          >
+                            {formatINR(liveProfit)}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+
+                      <TableCell className="text-right font-mono text-xs text-ink-muted">
+                        {p.mrp !== null ? formatINR(p.mrp) : "—"}
+                      </TableCell>
+
+                      <TableCell>
+                        {renderStatusBadge(liveIsBelowCost, liveIsAboveMRP, p.needsReview)}
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        {saveSuccessMap[p.id] ? (
+                          <span className="text-leaf inline-flex items-center gap-0.5 text-xs font-bold">
+                            <Check size={14} weight="bold" /> Saved
+                          </span>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={!isEdited || savingProductId === p.id}
+                            onClick={() => handleSavePrice(p)}
+                            className="h-8 px-2 text-xs"
+                            title="Save price change"
+                          >
+                            <FloppyDisk size={15} />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
     </div>
   );

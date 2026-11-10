@@ -109,6 +109,33 @@ export default function AdminLoginPage() {
               >
                 {loading ? "Checking credentials..." : "Log in to store"}
               </Button>
+
+              {/* MVP Demo Login Note */}
+              <div className="mt-4 pt-3 border-t border-border/80">
+                <div className="rounded-md bg-page border border-border p-3 text-xs space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-ink">MVP Sample Login</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail("owner@pandianstore.local");
+                        setPassword("ChangeThisPassword123!");
+                      }}
+                      className="text-[11px] font-semibold text-leaf hover:underline"
+                    >
+                      Auto-fill
+                    </button>
+                  </div>
+                  <div className="text-muted space-y-0.5 font-mono text-[11px]">
+                    <div>
+                      Email: <span className="text-ink select-all">owner@pandianstore.local</span>
+                    </div>
+                    <div>
+                      Password: <span className="text-ink select-all">ChangeThisPassword123!</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </form>
           </CardContent>
         </Card>
