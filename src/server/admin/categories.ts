@@ -84,7 +84,15 @@ export async function createCategory(data: unknown) {
   revalidatePath("/admin/categories");
   revalidatePath("/", "layout");
 
-  return { success: true, category };
+  return {
+    success: true,
+    category: {
+      ...category,
+      lowMarkup: Number(category.lowMarkup),
+      recommendedMarkup: Number(category.recommendedMarkup),
+      highMarkup: Number(category.highMarkup),
+    },
+  };
 }
 
 export async function updateCategory(id: string, data: unknown) {
@@ -113,7 +121,15 @@ export async function updateCategory(id: string, data: unknown) {
   revalidatePath("/admin/categories");
   revalidatePath("/", "layout");
 
-  return { success: true, category: updated };
+  return {
+    success: true,
+    category: {
+      ...updated,
+      lowMarkup: Number(updated.lowMarkup),
+      recommendedMarkup: Number(updated.recommendedMarkup),
+      highMarkup: Number(updated.highMarkup),
+    },
+  };
 }
 
 export async function toggleCategoryStatus(id: string) {

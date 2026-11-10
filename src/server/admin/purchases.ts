@@ -29,15 +29,19 @@ export interface PriceReviewItem {
   productId: string;
   productName: string;
   productNameTamil: string | null;
+  categoryName: string;
   baseUnitSymbol: string;
   oldCost: number | null;
   newCost: number;
   currentSellingPrice: number | null;
+  isPublished: boolean;
   mrp: number | null;
   lowPrice: number;
   recommendedPrice: number;
   highPrice: number;
+  lowMarkup: number;
   categoryDefaultMarkup: number;
+  highMarkup: number;
 }
 
 /**
@@ -587,15 +591,19 @@ export async function recordPurchase(data: PurchaseFormInput) {
         productId: product.id,
         productName: product.name,
         productNameTamil: product.nameTamil,
+        categoryName: product.category.name,
         baseUnitSymbol: product.baseUnit.symbol,
         oldCost: oldCostBasis ? oldCostBasis.toNumber() : null,
         newCost: newCostBasis.toNumber(),
         currentSellingPrice: product.sellingPrice ? product.sellingPrice.toNumber() : null,
+        isPublished: product.isPublished,
         mrp: product.mrp ? product.mrp.toNumber() : null,
         lowPrice: suggestions.low.price.toNumber(),
         recommendedPrice: suggestions.recommended.price.toNumber(),
         highPrice: suggestions.high.price.toNumber(),
+        lowMarkup: product.category.lowMarkup.toNumber(),
         categoryDefaultMarkup: product.category.recommendedMarkup.toNumber(),
+        highMarkup: product.category.highMarkup.toNumber(),
       });
     }
 

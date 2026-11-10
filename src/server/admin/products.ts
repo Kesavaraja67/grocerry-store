@@ -181,9 +181,28 @@ export async function getProductById(id: string) {
     description: product.description,
     sizeLabel: product.sizeLabel,
     categoryId: product.categoryId,
-    category: product.category,
+    category: {
+      id: product.category.id,
+      name: product.category.name,
+      slug: product.category.slug,
+      iconKey: product.category.iconKey,
+      tint: product.category.tint,
+      lowMarkup: Number(product.category.lowMarkup),
+      recommendedMarkup: Number(product.category.recommendedMarkup),
+      highMarkup: Number(product.category.highMarkup),
+    },
     baseUnitId: product.baseUnitId,
-    baseUnit: product.baseUnit,
+    baseUnit: {
+      id: product.baseUnit.id,
+      code: product.baseUnit.code,
+      label: product.baseUnit.label,
+      symbol: product.baseUnit.symbol,
+      dimension: product.baseUnit.dimension,
+      factorToBase: product.baseUnit.factorToBase
+        ? Number(product.baseUnit.factorToBase)
+        : null,
+      isBaseable: product.baseUnit.isBaseable,
+    },
     sellStep: Number(product.sellStep),
     minQty: Number(product.minQty),
     maxQty: Number(product.maxQty),
@@ -325,7 +344,30 @@ export async function createProduct(
   revalidatePath("/admin/products");
   revalidatePath("/", "layout");
 
-  return { success: true, product };
+  return {
+    success: true,
+    product: {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      nameTamil: product.nameTamil,
+      brand: product.brand,
+      description: product.description,
+      sizeLabel: product.sizeLabel,
+      categoryId: product.categoryId,
+      baseUnitId: product.baseUnitId,
+      sellStep: Number(product.sellStep),
+      minQty: Number(product.minQty),
+      maxQty: Number(product.maxQty),
+      sellingPrice: product.sellingPrice ? Number(product.sellingPrice) : null,
+      mrp: product.mrp ? Number(product.mrp) : null,
+      stockQty: Number(product.stockQty),
+      lowStockAt: Number(product.lowStockAt),
+      isPublished: product.isPublished,
+      isFeatured: product.isFeatured,
+      isArchived: product.isArchived,
+    },
+  };
 }
 
 export async function updateProduct(

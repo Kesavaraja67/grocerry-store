@@ -105,6 +105,7 @@ export function ProductForm({
     initialData?.sellingPrice ? String(initialData.sellingPrice) : ""
   );
   const [customMarkup, setCustomMarkup] = useState<string>("");
+  const [referenceCost, setReferenceCost] = useState<string>("");
 
   // Images state (up to 3 images)
   const [images, setImages] = useState<Array<{ url: string; publicId: string; alt?: string }>>(
@@ -121,11 +122,13 @@ export function ProductForm({
 
   // Cost and active category info
   const selectedCat = categories.find((c) => c.id === categoryId);
-  const currentCost = initialData?.cost
+  const recordedCost = initialData?.cost
     ? initialData.cost.costBasis === "AVERAGE" && initialData.cost.avgCost
       ? initialData.cost.avgCost
       : initialData.cost.lastCost
     : null;
+  const refCostNum = referenceCost !== "" && Number(referenceCost) > 0 ? Number(referenceCost) : null;
+  const currentCost = recordedCost ?? refCostNum;
 
   // Calculate live metrics
   const priceNum = Number(sellingPrice);
@@ -395,12 +398,57 @@ export function ProductForm({
       {/* 2. Customer Order Steps & Limits (Loose vs Packaged) */}
       <Card>
         <CardHeader>
-          <CardTitle>Quantities & Ordering steps</CardTitle>
+          <CardTitle>Quantities &amp; Ordering steps</CardTitle>
           <CardDescription>
-            Loose goods (like rice) can be sold in 0.25 kg steps. Packaged goods sell in 1 unit steps.
+            Pick a preset or enter custom steps. Loose goods usually sell in 0.25 kg steps; packets sell in 1 unit steps.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-ink-muted">Quick presets:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setSellStep(0.25);
+                setMinQty(0.25);
+              }}
+              className={`px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors ${
+                sellStep === 0.25
+                  ? "bg-leaf text-white border-leaf"
+                  : "bg-page text-ink border-border hover:bg-leaf-light"
+              }`}
+            >
+              Loose (0.25 step)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSellStep(0.5);
+                setMinQty(0.5);
+              }}
+              className={`px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors ${
+                sellStep === 0.5
+                  ? "bg-leaf text-white border-leaf"
+                  : "bg-page text-ink border-border hover:bg-leaf-light"
+              }`}
+            >
+              Half-unit (0.5 step)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSellStep(1);
+                setMinQty(1);
+              }}
+              className={`px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors ${
+                sellStep === 1
+                  ? "bg-leaf text-white border-leaf"
+                  : "bg-page text-ink border-border hover:bg-leaf-light"
+              }`}
+            >
+              Packaged / Piece (1 step)
+            </button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-ink">Quantity step (sellStep)</label>
@@ -463,19 +511,42 @@ export function ProductForm({
           </div>
         </CardHeader>
         <CardContent className="p-4 sm:p-6 space-y-4">
-          {/* Wholesale cost status */}
-          {!currentCost ? (
-            <div className="p-3 rounded-md bg-page border border-border text-xs text-muted flex items-center gap-2">
-              <Tag size={16} className="text-muted shrink-0" />
-              <span>
-                No purchase recorded for this item yet. Record a wholesale purchase to receive profit suggestions.
-              </span>
+          {/* Wholesale cost status / Quick cost helper */}
+          {!recordedCost && (
+            <div className="p-3.5 rounded-md bg-page border border-border text-xs space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-ink-muted">
+                  <Tag size={16} className="text-leaf shrink-0" />
+                  <span>
+                    Optional: Enter what you paid wholesale to preview suggested selling prices right now.
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-semibold text-ink">Buying Cost (₹):</span>
+                  <Input
+                    type="number"
+                    step="0.25"
+                    min="0"
+                    value={referenceCost}
+                    onChange={(e) => setReferenceCost(e.target.value)}
+                    placeholder="e.g. 50"
+                    className="w-28 h-9 text-right font-mono bg-surface"
+                  />
+                </div>
+              </div>
+              {selectedCat && (
+                <p className="text-[11px] text-ink-muted">
+                  Suggestions use <strong>{selectedCat.name}</strong> rules: Low +{selectedCat.lowMarkup}% · Rec +{selectedCat.recommendedMarkup}% · High +{selectedCat.highMarkup}%. (When you later record a wholesale bill, real weighted average cost is saved automatically.)
+                </p>
+              )}
             </div>
-          ) : (
+          )}
+
+          {currentCost && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-ink">Category suggestion starting points:</span>
-                <span className="text-[11px] text-muted italic">Starting points only, not market prices</span>
+                <span className="text-[11px] text-muted italic">Cost + {selectedCat?.name} profit %</span>
               </div>
 
               {suggestions && (

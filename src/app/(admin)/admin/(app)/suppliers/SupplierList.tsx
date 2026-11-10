@@ -51,6 +51,7 @@ export function SupplierList({ initialSuppliers, initialSearch }: SupplierListPr
   const [search, setSearch] = useState(initialSearch);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<SupplierItem | null>(null);
+  const [justCreatedSupplier, setJustCreatedSupplier] = useState<{ id: string; name: string } | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -133,6 +134,7 @@ export function SupplierList({ initialSuppliers, initialSearch }: SupplierListPr
             },
             ...prev,
           ]);
+          setJustCreatedSupplier({ id: res.supplier.id, name: res.supplier.name });
         }
       }
       setDialogOpen(false);
@@ -157,6 +159,33 @@ export function SupplierList({ initialSuppliers, initialSearch }: SupplierListPr
 
   return (
     <div className="space-y-4">
+      {/* Post-Create Shortcut Banner */}
+      {justCreatedSupplier && (
+        <div className="p-3.5 rounded-lg border border-leaf/30 bg-leaf-light flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-xs text-ink">
+            <span className="font-bold text-leaf">&ldquo;{justCreatedSupplier.name}&rdquo;</span> added to your wholesale stores!{" "}
+            <span className="text-ink-muted">Want to record products bought from them now?</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href={`/admin/purchases/new?supplierId=${justCreatedSupplier.id}`}>
+              <Button variant="turmeric" size="sm" className="gap-1.5 font-semibold text-xs">
+                <Plus size={14} weight="bold" />
+                <span>Add items &amp; bill for this store</span>
+              </Button>
+            </Link>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setJustCreatedSupplier(null)}
+              className="text-xs text-muted"
+            >
+              Dismiss
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Search & Actions Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
@@ -299,7 +328,9 @@ export function SupplierList({ initialSuppliers, initialSearch }: SupplierListPr
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-ink">Phone number</label>
+                <label className="text-xs font-semibold text-ink">
+                  Phone number <span className="font-normal text-muted">(optional)</span>
+                </label>
                 <Input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -307,17 +338,21 @@ export function SupplierList({ initialSuppliers, initialSearch }: SupplierListPr
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-ink">Market area / Locality</label>
+                <label className="text-xs font-semibold text-ink">
+                  Market area <span className="font-normal text-muted">(optional)</span>
+                </label>
                 <Input
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
-                  placeholder="e.g. South Gate Market"
+                  placeholder="e.g. Main Market Area"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Full address</label>
+              <label className="text-xs font-semibold text-ink">
+                Full address <span className="font-normal text-muted">(optional)</span>
+              </label>
               <Input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
@@ -326,7 +361,9 @@ export function SupplierList({ initialSuppliers, initialSearch }: SupplierListPr
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Notes</label>
+              <label className="text-xs font-semibold text-ink">
+                Notes <span className="font-normal text-muted">(optional)</span>
+              </label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

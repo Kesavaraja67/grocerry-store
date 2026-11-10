@@ -3,6 +3,7 @@
 import "server-only";
 import { Decimal } from "decimal.js";
 import { Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/server/db";
 import { requireOwner } from "@/server/auth";
 import { recordAuditLog } from "@/server/audit";
@@ -391,5 +392,32 @@ export async function updateProductCostBasis(
   });
 
   return { success: true, costBasis };
+}
+
+/**
+ * Applies owner-confirmed prices from the post-purchase price review modal,
+ * optionally publishing newly priced products so they appear in the store right away.
+ */
+export async function applyPurchaseReviewedPrices(
+  items: Array<{ productId: string; sellingPrice: number; publish?: boolean }>
+) {
+  await requireOwner();
+
+  for (const item of items) {
+    if (!item.sellingPrice || item.sellingPrice <= 0) continue;
+    await updateProductSellingPrice(item.productId, item.sellingPrice);
+    if (item.publish) {
+      await prisma.product.update({
+        where: { id: item.productId },
+        data: { isPublished: true },
+      });
+    }
+  }
+
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/pricing");
+  revalidatePath("/", "layout");
+
+  return { success: true };
 }
 
