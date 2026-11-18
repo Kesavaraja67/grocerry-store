@@ -34,9 +34,9 @@ export interface AdminOrdersResult {
     addressLine: string | null;
     area: string | null;
     pincode: string | null;
-    subtotal: Decimal;
-    deliveryFee: Decimal;
-    total: Decimal;
+    subtotal: number;
+    deliveryFee: number;
+    total: number;
     rejectedReason: string | null;
     cancelReason: string | null;
     placedAt: Date;
@@ -45,10 +45,10 @@ export interface AdminOrdersResult {
     items: Array<{
       id: string;
       productName: string;
-      quantity: Decimal;
+      quantity: number;
       unitLabel: string;
-      unitPrice: Decimal;
-      lineTotal: Decimal;
+      unitPrice: number;
+      lineTotal: number;
     }>;
   }>;
   total: number;
@@ -155,15 +155,22 @@ export async function getAdminOrders(
       addressLine: o.addressLine,
       area: o.area,
       pincode: o.pincode,
-      subtotal: o.subtotal,
-      deliveryFee: o.deliveryFee,
-      total: o.total,
+      subtotal: Number(o.subtotal),
+      deliveryFee: Number(o.deliveryFee),
+      total: Number(o.total),
       rejectedReason: o.rejectedReason,
       cancelReason: o.cancelReason,
       placedAt: o.placedAt,
       itemCount: o.items.length,
       itemsSummary,
-      items: o.items,
+      items: o.items.map((i) => ({
+        id: i.id,
+        productName: i.productName,
+        quantity: Number(i.quantity),
+        unitLabel: i.unitLabel,
+        unitPrice: Number(i.unitPrice),
+        lineTotal: Number(i.lineTotal),
+      })),
     };
   });
 
@@ -206,7 +213,47 @@ export async function getAdminOrderById(orderId: string) {
     },
   });
 
-  return order;
+  if (!order) return null;
+
+  return {
+    ...order,
+    subtotal: Number(order.subtotal),
+    deliveryFee: Number(order.deliveryFee),
+    total: Number(order.total),
+    items: order.items.map((item) => ({
+      ...item,
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+      lineTotal: Number(item.lineTotal),
+      cost: item.cost
+        ? {
+            ...item.cost,
+            unitCost: item.cost.unitCost ? Number(item.cost.unitCost) : null,
+          }
+        : null,
+      product: {
+        ...item.product,
+        stockQty: Number(item.product.stockQty),
+        cost: item.product.cost
+          ? {
+              ...item.product.cost,
+              lastCost: item.product.cost.lastCost
+                ? Number(item.product.cost.lastCost)
+                : null,
+              avgCost: item.product.cost.avgCost
+                ? Number(item.product.cost.avgCost)
+                : null,
+              markupPercent: item.product.cost.markupPercent
+                ? Number(item.product.cost.markupPercent)
+                : null,
+              pricedAtCost: item.product.cost.pricedAtCost
+                ? Number(item.product.cost.pricedAtCost)
+                : null,
+            }
+          : null,
+      },
+    })),
+  };
 }
 
 /**

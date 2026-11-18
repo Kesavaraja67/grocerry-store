@@ -46,7 +46,7 @@ export async function getProducts(options?: {
     orderBy: { updatedAt: "desc" },
     include: {
       category: { select: { id: true, name: true, tint: true } },
-      baseUnit: { select: { id: true, symbol: true, label: true } },
+      baseUnit: { select: { id: true, symbol: true, label: true, dimension: true, code: true } },
       images: {
         orderBy: { sortOrder: "asc" },
         take: 1,
@@ -87,6 +87,7 @@ export async function getProducts(options?: {
       lowStockAt: Number(p.lowStockAt),
       sellingPrice,
       mrp: p.mrp ? Number(p.mrp) : null,
+      aliases: p.aliases ?? [],
       isPublished: p.isPublished,
       isFeatured: p.isFeatured,
       thumbnailUrl: p.images[0]?.url || null,
@@ -213,6 +214,7 @@ export async function getProductById(id: string) {
     isPublished: product.isPublished,
     isFeatured: product.isFeatured,
     isArchived: product.isArchived,
+    aliases: product.aliases ?? [],
     images: product.images,
     cost: product.cost
       ? {
@@ -543,4 +545,64 @@ export async function archiveProduct(id: string) {
   revalidatePath("/", "layout");
 
   return { success: true };
+}
+
+export async function addAliasToProduct(productId: string, alias: string) {
+  await requireOwner();
+  const clean = alias.trim().toLowerCase();
+  if (!clean) return { success: false, error: "Nickname cannot be empty." };
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { aliases: true },
+  });
+
+  if (!product) return { success: false, error: "Product not found." };
+
+  const currentAliases: string[] = (product.aliases as string[]) || [];
+  if (currentAliases.map((a: string) => a.toLowerCase()).includes(clean)) {
+    return { success: true, aliases: currentAliases };
+  }
+
+  const updated = await prisma.product.update({
+    where: { id: productId },
+    data: {
+      aliases: [...currentAliases, clean],
+    },
+    select: { aliases: true },
+  });
+
+  revalidatePath(`/admin/items/${productId}`);
+  revalidatePath("/admin/items");
+  revalidatePath("/admin/products");
+
+  return { success: true, aliases: updated.aliases };
+}
+
+export async function removeAliasFromProduct(productId: string, alias: string) {
+  await requireOwner();
+  const clean = alias.trim().toLowerCase();
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { aliases: true },
+  });
+
+  if (!product) return { success: false, error: "Product not found." };
+
+  const updated = await prisma.product.update({
+    where: { id: productId },
+    data: {
+      aliases: ((product.aliases as string[]) || []).filter(
+        (a: string) => a.toLowerCase() !== clean
+      ),
+    },
+    select: { aliases: true },
+  });
+
+  revalidatePath(`/admin/items/${productId}`);
+  revalidatePath("/admin/items");
+  revalidatePath("/admin/products");
+
+  return { success: true, aliases: updated.aliases };
 }

@@ -15,7 +15,7 @@ export type FulfilmentType = "DELIVERY" | "PICKUP";
 
 export const LEGAL_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PLACED: ["ACCEPTED", "REJECTED", "CANCELLED"],
-  ACCEPTED: ["PROCESSING", "CANCELLED"],
+  ACCEPTED: ["PROCESSING", "READY", "CANCELLED"],
   PROCESSING: ["READY", "CANCELLED"],
   READY: ["COMPLETED", "CANCELLED"],
   COMPLETED: [],

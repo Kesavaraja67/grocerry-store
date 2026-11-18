@@ -112,6 +112,7 @@ export const productSchema = z.object({
   sellingPrice: z.number().positive("Price must be positive.").optional().nullable(),
   mrp: z.number().positive("MRP must be positive.").optional().nullable(),
   lowStockAt: z.number().min(0).default(5),
+  aliases: z.array(z.string()).default([]).optional(),
   isPublished: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
 });

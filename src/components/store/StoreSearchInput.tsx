@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MagnifyingGlass, X, ArrowRight, Tag } from "@phosphor-icons/react";
+import { MicButton } from "@/components/admin/MicButton";
 import { formatINR } from "@/lib/format";
 
 interface SuggestionProduct {
@@ -113,12 +114,21 @@ export function StoreSearchInput({
               setQuery("");
               setIsOpen(false);
             }}
-            className="absolute right-11 top-1/2 -translate-y-1/2 p-1 text-ink-muted hover:text-ink"
+            className="absolute right-20 top-1/2 -translate-y-1/2 p-1 text-ink-muted hover:text-ink"
             aria-label="Clear search"
           >
             <X size={15} />
           </button>
         )}
+
+        <div className="absolute right-11 top-1/2 -translate-y-1/2">
+          <MicButton
+            onResult={(text) => {
+              setQuery(text);
+              router.push(`/search?q=${encodeURIComponent(text.trim())}`);
+            }}
+          />
+        </div>
 
         <button
           type="submit"

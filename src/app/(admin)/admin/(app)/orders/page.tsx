@@ -1,10 +1,11 @@
 import React from "react";
 import { getAdminOrders } from "@/server/admin/orders";
 import { OrdersManager } from "./OrdersManager";
-import { OrderStatus, FulfilmentType } from "@/server/domain/orders";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Order Management | Pandian Store Admin",
+  title: "Orders | Pandian Store Admin",
 };
 
 interface OrdersPageProps {
@@ -19,26 +20,31 @@ interface OrdersPageProps {
 export default async function AdminOrdersPage({ searchParams }: OrdersPageProps) {
   const params = await searchParams;
 
-  const status = (params.status as OrderStatus | "ALL") || "ALL";
-  const query = params.q || "";
-  const fulfilment = (params.fulfilment as FulfilmentType | "ALL") || "ALL";
-  const page = parseInt(params.page || "1", 10) || 1;
-
   const data = await getAdminOrders({
-    status,
-    query,
-    fulfilment,
-    page,
-    pageSize: 30,
+    status: "ALL",
+    query: params.q || "",
+    fulfilment: "ALL",
+    page: 1,
+    pageSize: 50,
   });
 
   return (
-    <OrdersManager
-      initialData={data}
-      currentStatus={status}
-      currentQuery={query}
-      currentFulfilment={fulfilment}
-    />
+    <div className="space-y-4 max-w-2xl mx-auto">
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-ink font-heading">
+          Customer orders
+        </h1>
+        <p className="text-xs text-muted">
+          Review incoming requests, pack items, and mark ready for delivery or pickup.
+        </p>
+      </div>
+
+      <OrdersManager
+        initialData={data}
+        currentStatus={params.status || "ALL"}
+        currentQuery={params.q || ""}
+        currentFulfilment={params.fulfilment || "ALL"}
+      />
+    </div>
   );
 }
-

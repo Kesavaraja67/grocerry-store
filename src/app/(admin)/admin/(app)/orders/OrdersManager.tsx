@@ -1,41 +1,39 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  MagnifyingGlass,
-  Funnel,
+  ClipboardText,
+  WhatsappLogo,
   CheckCircle,
   XCircle,
-  Package,
   Truck,
   Storefront,
-  Printer,
-  WhatsappLogo,
-  ArrowRight,
-  Clock,
-  WarningCircle,
   CaretRight,
+  WarningCircle,
+  Clock,
+  Phone,
+  Package,
 } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   acceptOrder,
   updateOrderStatus,
   cancelOrRejectOrder,
   AdminOrdersResult,
 } from "@/server/admin/orders";
-import { OrderStatus, FulfilmentType } from "@/server/domain/orders";
-import { formatINR } from "@/server/domain/money";
+import { OrderStatus, FulfilmentType, CUSTOMER_STATUS_LABELS } from "@/server/domain/orders";
+import { copy } from "@/lib/copy";
+import { useLang } from "@/context/LanguageContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface OrdersManagerProps {
   initialData: AdminOrdersResult;
@@ -44,15 +42,7 @@ interface OrdersManagerProps {
   currentFulfilment: string;
 }
 
-const STATUS_TABS: Array<{ id: OrderStatus | "ALL"; label: string; labelTamil: string }> = [
-  { id: "ALL", label: "All Orders", labelTamil: "அனைத்தும்" },
-  { id: "PLACED", label: "New Requests", labelTamil: "புதியவை" },
-  { id: "ACCEPTED", label: "Accepted", labelTamil: "ஏற்றுக்கொள்ளப்பட்டது" },
-  { id: "PROCESSING", label: "Packing", labelTamil: "பேக்கிங்" },
-  { id: "READY", label: "Ready", labelTamil: "தயார்" },
-  { id: "COMPLETED", label: "Completed", labelTamil: "முடிந்தது" },
-  { id: "CANCELLED", label: "Cancelled", labelTamil: "ரத்து" },
-];
+type TabType = "NEW" | "IN_PROGRESS" | "DONE";
 
 export function OrdersManager({
   initialData,
@@ -61,750 +51,455 @@ export function OrdersManager({
   currentFulfilment,
 }: OrdersManagerProps) {
   const router = useRouter();
+  const { mode } = useLang();
   const [isPending, startTransition] = useTransition();
 
-  const [search, setSearch] = useState(currentQuery);
-  const [activeStatus, setActiveStatus] = useState<string>(currentStatus);
-  const [activeFulfilment, setActiveFulfilment] = useState<string>(currentFulfilment);
-
-  // Dialog states
-  const [rejectDialog, setRejectDialog] = useState<{
-    open: boolean;
-    orderId: string;
-    orderNumber: string;
-    action: "CANCEL" | "REJECT";
-    reason: string;
-    error: string | null;
-  }>({
-    open: false,
-    orderId: "",
-    orderNumber: "",
-    action: "REJECT",
-    reason: "",
-    error: null,
-  });
-
+  const [activeTab, setActiveTab] = useState<TabType>("NEW");
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    applyFilter({ query: search });
+  // Reject / Cancel dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOrder, setDialogOrder] = useState<{
+    id: string;
+    orderNumber: string;
+    action: "REJECT" | "CANCEL";
+  } | null>(null);
+  const [reason, setReason] = useState("");
+  const [dialogError, setDialogError] = useState<string | null>(null);
+
+  const orders = initialData.orders;
+
+  // Tab grouping
+  const groupedOrders = useMemo(() => {
+    const newOrders = orders.filter((o) => o.status === "PLACED");
+    const inProgressOrders = orders.filter((o) =>
+      ["ACCEPTED", "PROCESSING", "READY"].includes(o.status)
+    );
+    const doneOrders = orders.filter((o) =>
+      ["COMPLETED", "REJECTED", "CANCELLED"].includes(o.status)
+    );
+
+    return {
+      NEW: newOrders,
+      IN_PROGRESS: inProgressOrders,
+      DONE: doneOrders,
+    };
+  }, [orders]);
+
+  const counts = {
+    NEW: groupedOrders.NEW.length,
+    IN_PROGRESS: groupedOrders.IN_PROGRESS.length,
+    DONE: groupedOrders.DONE.length,
   };
 
-  const applyFilter = (newParams: { status?: string; query?: string; fulfilment?: string }) => {
-    const s = newParams.status !== undefined ? newParams.status : activeStatus;
-    const q = newParams.query !== undefined ? newParams.query : search;
-    const f = newParams.fulfilment !== undefined ? newParams.fulfilment : activeFulfilment;
+  const activeList = groupedOrders[activeTab];
 
-    const url = new URL("/admin/orders", window.location.origin);
-    if (s && s !== "ALL") url.searchParams.set("status", s);
-    if (q) url.searchParams.set("q", q);
-    if (f && f !== "ALL") url.searchParams.set("fulfilment", f);
-
-    startTransition(() => {
-      router.push(url.pathname + url.search);
-    });
-  };
-
-  // State actions
-  const handleAccept = async (orderId: string) => {
+  // Actions
+  const handleAccept = (orderId: string) => {
     setActionError(null);
     startTransition(async () => {
-      const res = await acceptOrder(orderId);
-      if (!res.success) {
-        setActionError(res.error || "Failed to accept order.");
-      } else {
-        router.refresh();
+      try {
+        const res = await acceptOrder(orderId);
+        if (!res.success) {
+          setActionError(res.error || "Failed to confirm order.");
+        } else {
+          router.refresh();
+        }
+      } catch (e: unknown) {
+        setActionError(e instanceof Error ? e.message : "Failed to confirm order.");
       }
     });
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+  const handleMarkReady = (orderId: string) => {
     setActionError(null);
     startTransition(async () => {
-      const res = await updateOrderStatus(orderId, newStatus);
-      if (!res.success) {
-        setActionError(res.error || "Failed to update order status.");
-      } else {
-        router.refresh();
+      try {
+        const res = await updateOrderStatus(orderId, "READY");
+        if (!res.success) {
+          setActionError(res.error || "Failed to update order.");
+        } else {
+          router.refresh();
+        }
+      } catch (e: unknown) {
+        setActionError(e instanceof Error ? e.message : "Failed to update order.");
       }
     });
   };
 
-  const openRejectOrCancelModal = (
-    orderId: string,
-    orderNumber: string,
-    action: "CANCEL" | "REJECT"
-  ) => {
-    setRejectDialog({
-      open: true,
-      orderId,
-      orderNumber,
-      action,
-      reason: action === "REJECT" ? "Items temporarily out of stock" : "Customer requested cancellation",
-      error: null,
+  const handleComplete = (orderId: string) => {
+    setActionError(null);
+    startTransition(async () => {
+      try {
+        const res = await updateOrderStatus(orderId, "COMPLETED");
+        if (!res.success) {
+          setActionError(res.error || "Failed to complete order.");
+        } else {
+          router.refresh();
+        }
+      } catch (e: unknown) {
+        setActionError(e instanceof Error ? e.message : "Failed to complete order.");
+      }
     });
   };
 
-  const handleConfirmRejectOrCancel = async () => {
-    if (!rejectDialog.reason.trim()) {
-      setRejectDialog((prev) => ({ ...prev, error: "Please enter a reason." }));
+  const handleOpenDialog = (orderId: string, orderNumber: string, action: "REJECT" | "CANCEL") => {
+    setDialogOrder({ id: orderId, orderNumber, action });
+    setReason("");
+    setDialogError(null);
+    setDialogOpen(true);
+  };
+
+  const handleConfirmDialog = () => {
+    if (!dialogOrder) return;
+    if (!reason.trim()) {
+      setDialogError(copy.errors.reasonRequired);
       return;
     }
 
+    setDialogError(null);
     startTransition(async () => {
-      const res = await cancelOrRejectOrder(
-        rejectDialog.orderId,
-        rejectDialog.action,
-        rejectDialog.reason
-      );
-      if (!res.success) {
-        setRejectDialog((prev) => ({ ...prev, error: res.error || "Failed to cancel order." }));
-      } else {
-        setRejectDialog((prev) => ({ ...prev, open: false }));
-        router.refresh();
+      try {
+        const res = await cancelOrRejectOrder(
+          dialogOrder.id,
+          dialogOrder.action,
+          reason.trim()
+        );
+        if (!res.success) {
+          setDialogError(res.error || "Failed to update order.");
+        } else {
+          setDialogOpen(false);
+          router.refresh();
+        }
+      } catch (e: unknown) {
+        setDialogError(e instanceof Error ? e.message : "Failed to update order.");
       }
     });
   };
 
+  const handleWhatsApp = (phone: string, orderNumber: string, customerName: string) => {
+    const clean = phone.replace(/\D/g, "");
+    const full = clean.length === 10 ? `91${clean}` : clean;
+    const text = encodeURIComponent(
+      `வணக்கம் ${customerName}, உங்கள் பாண்டியன் ஸ்டோர் ஆர்டர் (${orderNumber}) பற்றிய தகவல்:`
+    );
+    window.open(`https://wa.me/${full}?text=${text}`, "_blank");
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">Order Management</h1>
-          <p className="text-sm text-muted">
-            Manage incoming customer requests, confirm orders, update packing status, and print slips.
-          </p>
-        </div>
+    <div className="space-y-4 max-w-2xl mx-auto pb-12">
+      {/* 3 Tabs: New · In progress · Done */}
+      <div className="grid grid-cols-3 gap-2 bg-surface p-1.5 rounded-2xl border border-border shadow-xs">
+        {(
+          [
+            { id: "NEW", labelEn: copy.admin.orders.tabNew.en, labelTa: copy.admin.orders.tabNew.ta, count: counts.NEW },
+            { id: "IN_PROGRESS", labelEn: copy.admin.orders.tabInProgress.en, labelTa: copy.admin.orders.tabInProgress.ta, count: counts.IN_PROGRESS },
+            { id: "DONE", labelEn: copy.admin.orders.tabDone.en, labelTa: copy.admin.orders.tabDone.ta, count: counts.DONE },
+          ] as const
+        ).map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs font-bold transition-all min-h-[48px] ${
+                isActive
+                  ? "bg-leaf text-white shadow-xs"
+                  : "text-ink hover:bg-page"
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <span>{mode === "ta" ? tab.labelTa : tab.labelEn}</span>
+                {tab.count > 0 && (
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                      isActive ? "bg-white/20 text-white" : "bg-turmeric text-ink"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </div>
+              {mode === "both" && (
+                <span className={`text-[10px] font-tamil font-normal leading-tight ${isActive ? "text-white/80" : "text-muted"}`}>
+                  {tab.labelTa}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {actionError && (
-        <div className="p-4 rounded-md bg-red-light border border-red text-sm text-red flex items-start gap-3">
-          <WarningCircle size={20} className="shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="font-semibold">Action could not be completed</p>
-            <p className="mt-0.5">{actionError}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setActionError(null)}
-            className="text-xs underline hover:no-underline font-medium"
-          >
-            Dismiss
-          </button>
+        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+          <WarningCircle size={16} weight="bold" />
+          <span>{actionError}</span>
         </div>
       )}
 
-      {/* Filter Tabs */}
-      <div className="border-b border-border overflow-x-auto">
-        <div className="flex gap-2 min-w-max pb-2">
-          {STATUS_TABS.map((tab) => {
-            const count = initialData.statusCounts[tab.id] ?? 0;
-            const isActive = activeStatus === tab.id;
-            const isPlaced = tab.id === "PLACED" && count > 0;
+      {/* Orders List */}
+      <div className="space-y-3">
+        {activeList.length === 0 ? (
+          <div className="py-12 px-4 text-center bg-surface border border-border rounded-2xl">
+            <ClipboardText size={36} weight="light" className="mx-auto text-muted mb-2" />
+            <p className="text-sm font-semibold text-ink">
+              {activeTab === "NEW"
+                ? copy.admin.orders.emptyNew.en
+                : activeTab === "IN_PROGRESS"
+                ? copy.admin.orders.emptyInProgress.en
+                : copy.admin.orders.emptyDone.en}
+            </p>
+            <p className="text-xs text-muted font-tamil mt-1">
+              {activeTab === "NEW"
+                ? copy.admin.orders.emptyNew.ta
+                : activeTab === "IN_PROGRESS"
+                ? copy.admin.orders.emptyInProgress.ta
+                : copy.admin.orders.emptyDone.ta}
+            </p>
+          </div>
+        ) : (
+          activeList.map((order) => {
+            const isDelivery = order.fulfilment === "DELIVERY";
+            const statusLabel =
+              CUSTOMER_STATUS_LABELS[order.status]?.label || order.status;
 
             return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setActiveStatus(tab.id);
-                  applyFilter({ status: tab.id });
-                }}
-                className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-md transition-all ${
-                  isActive
-                    ? "bg-leaf text-surface shadow-xs"
-                    : isPlaced
-                    ? "bg-turmeric-light text-ink hover:bg-turmeric-light/80 border border-turmeric/30"
-                    : "text-muted hover:text-ink hover:bg-page"
-                }`}
+              <div
+                key={order.id}
+                className="bg-surface border-2 border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5 transition-all"
               >
-                <span>{tab.label}</span>
-                <span
-                  className={`text-xs px-1.5 py-0.5 rounded-full tabular-nums font-semibold ${
-                    isActive
-                      ? "bg-white/20 text-surface"
-                      : isPlaced
-                      ? "bg-turmeric text-ink font-bold"
-                      : "bg-surface border border-border text-muted"
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+                {/* Header: Customer + Fulfilment + Order Number */}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-base text-ink">
+                        {order.customerName}
+                      </span>
+                      <span className="text-xs font-mono text-muted">
+                        #{order.orderNumber}
+                      </span>
+                    </div>
 
-      {/* Search & Fulfilment Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by order #, customer, phone..."
-            className="w-full h-11 pl-10 pr-4 text-sm bg-surface border border-border rounded-md text-ink placeholder:text-muted focus:ring-2 focus:ring-leaf focus:outline-none"
-          />
-          <MagnifyingGlass
-            size={18}
-            className="absolute left-3.5 top-3.5 text-muted pointer-events-none"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearch("");
-                applyFilter({ query: "" });
-              }}
-              className="absolute right-3 top-3 text-xs text-muted hover:text-ink"
-            >
-              Clear
-            </button>
-          )}
-        </form>
-
-        <div className="flex items-center gap-2">
-          <div className="flex rounded-md border border-border bg-surface p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveFulfilment("ALL");
-                applyFilter({ fulfilment: "ALL" });
-              }}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
-                activeFulfilment === "ALL" ? "bg-page text-ink shadow-xs" : "text-muted hover:text-ink"
-              }`}
-            >
-              All Types
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveFulfilment("DELIVERY");
-                applyFilter({ fulfilment: "DELIVERY" });
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all ${
-                activeFulfilment === "DELIVERY" ? "bg-page text-leaf font-semibold shadow-xs" : "text-muted hover:text-ink"
-              }`}
-            >
-              <Truck size={14} />
-              Delivery
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveFulfilment("PICKUP");
-                applyFilter({ fulfilment: "PICKUP" });
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all ${
-                activeFulfilment === "PICKUP" ? "bg-page text-leaf font-semibold shadow-xs" : "text-muted hover:text-ink"
-              }`}
-            >
-              <Storefront size={14} />
-              Pickup
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Orders List */}
-      {initialData.orders.length === 0 ? (
-        <div className="p-12 text-center bg-surface border border-border rounded-lg">
-          <div className="w-12 h-12 mx-auto rounded-full bg-page flex items-center justify-center text-muted mb-3">
-            <Package size={24} />
-          </div>
-          <h3 className="font-semibold text-ink text-base">No orders found</h3>
-          <p className="text-sm text-muted mt-1 max-w-sm mx-auto">
-            {activeStatus !== "ALL" || search
-              ? "No orders match your active filter criteria. Try clearing the filter."
-              : "When customers place orders from the storefront, they will appear here for review and confirmation."}
-          </p>
-          {(activeStatus !== "ALL" || search) && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setActiveStatus("ALL");
-                setSearch("");
-                setActiveFulfilment("ALL");
-                applyFilter({ status: "ALL", query: "", fulfilment: "ALL" });
-              }}
-              className="mt-4"
-            >
-              Reset Filters
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* Desktop Table */}
-          <div className="hidden lg:block overflow-x-auto bg-surface border border-border rounded-lg shadow-xs">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-page/60 text-xs text-muted uppercase tracking-wider">
-                  <th className="py-3 px-4 font-semibold">Order</th>
-                  <th className="py-3 px-4 font-semibold">Customer</th>
-                  <th className="py-3 px-4 font-semibold">Fulfilment</th>
-                  <th className="py-3 px-4 font-semibold">Items</th>
-                  <th className="py-3 px-4 font-semibold text-right">Total</th>
-                  <th className="py-3 px-4 font-semibold">Status</th>
-                  <th className="py-3 px-4 font-semibold text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border text-sm">
-                {initialData.orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-page/40 transition-colors">
-                    {/* Order Number & Placed Time */}
-                    <td className="py-3.5 px-4 font-medium text-ink">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="font-bold text-leaf hover:underline flex items-center gap-1"
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted">
+                      <a
+                        href={`tel:${order.customerPhone}`}
+                        className="font-mono text-ink font-semibold hover:underline flex items-center gap-1"
                       >
-                        {order.orderNumber}
-                      </Link>
-                      <span className="text-xs text-muted flex items-center gap-1 mt-0.5">
-                        <Clock size={12} />
+                        <Phone size={12} />
+                        <span>{order.customerPhone}</span>
+                      </a>
+                      <span>·</span>
+                      <span>
                         {new Date(order.placedAt).toLocaleTimeString("en-IN", {
                           hour: "2-digit",
                           minute: "2-digit",
-                          day: "numeric",
-                          month: "short",
                         })}
                       </span>
-                    </td>
+                    </div>
 
-                    {/* Customer */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-ink">{order.customerName}</div>
-                      <div className="text-xs text-muted">{order.customerPhone}</div>
-                      {order.area && (
-                        <div className="text-[11px] text-muted truncate max-w-[150px]">
-                          {order.area}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Fulfilment */}
-                    <td className="py-3.5 px-4">
-                      {order.fulfilment === "DELIVERY" ? (
-                        <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">
-                          <Truck size={13} />
-                          Delivery
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium border border-purple-200">
-                          <Storefront size={13} />
-                          Pickup
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Items */}
-                    <td className="py-3.5 px-4 max-w-xs">
-                      <div className="text-xs font-medium text-ink truncate" title={order.itemsSummary}>
-                        {order.itemsSummary}
-                      </div>
-                      <span className="text-[11px] text-muted">
-                        {order.itemCount} {order.itemCount === 1 ? "item" : "items"}
-                      </span>
-                    </td>
-
-                    {/* Total */}
-                    <td className="py-3.5 px-4 text-right font-bold tabular-nums text-ink">
-                      {formatINR(order.total)}
-                    </td>
-
-                    {/* Status */}
-                    <td className="py-3.5 px-4">
-                      <OrderStatusBadge status={order.status} />
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {order.status === "PLACED" && (
-                          <>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="default"
-                              disabled={isPending}
-                              onClick={() => handleAccept(order.id)}
-                              className="text-xs h-8 px-2.5"
-                            >
-                              <CheckCircle size={15} weight="bold" />
-                              Accept
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={isPending}
-                              onClick={() =>
-                                openRejectOrCancelModal(order.id, order.orderNumber, "REJECT")
-                              }
-                              className="text-xs h-8 px-2 text-red hover:bg-red-light border-red/30"
-                            >
-                              <XCircle size={15} />
-                              Reject
-                            </Button>
-                          </>
-                        )}
-
-                        {order.status === "ACCEPTED" && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="turmeric"
-                            disabled={isPending}
-                            onClick={() => handleStatusChange(order.id, "PROCESSING")}
-                            className="text-xs h-8 px-2.5 text-ink font-semibold"
-                          >
-                            Start Packing
-                          </Button>
-                        )}
-
-                        {order.status === "PROCESSING" && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="default"
-                            disabled={isPending}
-                            onClick={() => handleStatusChange(order.id, "READY")}
-                            className="text-xs h-8 px-2.5"
-                          >
-                            Mark Ready
-                          </Button>
-                        )}
-
-                        {order.status === "READY" && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="turmeric"
-                            disabled={isPending}
-                            onClick={() => handleStatusChange(order.id, "COMPLETED")}
-                            className="text-xs h-8 px-2.5 text-ink font-semibold"
-                          >
-                            Complete
-                          </Button>
-                        )}
-
-                        <Link
-                          href={`/admin/orders/${order.id}/print`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 text-muted hover:text-ink hover:bg-page rounded transition-colors"
-                          title="Print Order Slip"
-                        >
-                          <Printer size={16} />
-                        </Link>
-
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="p-1.5 text-muted hover:text-leaf hover:bg-leaf-light rounded transition-colors"
-                          title="View Details"
-                        >
-                          <CaretRight size={16} />
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards (Phone-First) */}
-          <div className="lg:hidden space-y-3">
-            {initialData.orders.map((order) => (
-              <div
-                key={order.id}
-                className="bg-surface border border-border rounded-lg p-4 shadow-xs space-y-3"
-              >
-                {/* Top Row: Number, Status, Time */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className="font-bold text-leaf hover:underline text-base"
-                    >
-                      {order.orderNumber}
-                    </Link>
-                    {order.fulfilment === "DELIVERY" ? (
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">
-                        Delivery
-                      </span>
-                    ) : (
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium border border-purple-200">
-                        Pickup
-                      </span>
+                    {isDelivery && order.addressLine && (
+                      <p className="text-xs text-muted mt-1">
+                        📍 {order.addressLine}{order.area ? `, ${order.area}` : ""}
+                      </p>
                     )}
                   </div>
-                  <OrderStatusBadge status={order.status} />
+
+                  {/* Fulfilment Badge */}
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold shrink-0 ${
+                      isDelivery
+                        ? "bg-amber-50 text-amber-900 border border-amber-200"
+                        : "bg-leaf-light text-leaf border border-[#D5E3DA]"
+                    }`}
+                  >
+                    {isDelivery ? <Truck size={14} /> : <Storefront size={14} />}
+                    <span>{isDelivery ? "Delivery" : "Store pickup"}</span>
+                  </span>
                 </div>
 
-                {/* Customer Info */}
-                <div className="text-sm">
-                  <div className="font-semibold text-ink">{order.customerName}</div>
-                  <div className="text-xs text-muted flex items-center justify-between mt-0.5">
-                    <span>{order.customerPhone}</span>
-                    <span className="text-[11px]">
-                      {new Date(order.placedAt).toLocaleTimeString("en-IN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        day: "numeric",
-                        month: "short",
-                      })}
+                {/* Items & Total */}
+                <div className="bg-page p-3 rounded-xl border border-border space-y-1 text-xs">
+                  <p className="text-ink font-medium leading-relaxed">
+                    {order.itemsSummary}
+                  </p>
+                  <div className="flex items-center justify-between pt-1 border-t border-border/60">
+                    <span className="text-muted text-[11px]">
+                      {order.itemCount} {order.itemCount === 1 ? "item" : "items"}
+                    </span>
+                    <span className="font-mono font-extrabold text-base text-ink">
+                      ₹{order.total.toString()}
                     </span>
                   </div>
                 </div>
 
-                {/* Items Summary & Total */}
-                <div className="bg-page/70 p-2.5 rounded border border-border/50 text-xs">
-                  <p className="text-ink font-medium truncate">{order.itemsSummary}</p>
-                  <div className="flex items-center justify-between mt-1 text-muted">
-                    <span>{order.itemCount} items</span>
-                    <span className="font-bold text-ink text-sm tabular-nums">
-                      {formatINR(order.total)}
-                    </span>
-                  </div>
+                {/* Status Bar */}
+                <div className="flex items-center justify-between text-xs text-muted pt-0.5">
+                  <span className="font-semibold text-ink">
+                    Status: <span className="text-leaf">{statusLabel}</span>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleWhatsApp(order.customerPhone, order.orderNumber, order.customerName)}
+                    className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:underline min-h-[36px]"
+                  >
+                    <WhatsappLogo size={16} weight="fill" className="text-emerald-600" />
+                    <span>WhatsApp</span>
+                  </button>
                 </div>
 
-                {/* Actions Bar */}
-                <div className="flex items-center gap-2 pt-1 border-t border-border">
+                {/* Primary Action Button */}
+                <div className="pt-1 flex flex-col sm:flex-row gap-2">
                   {order.status === "PLACED" && (
                     <>
                       <Button
                         type="button"
-                        size="sm"
                         variant="default"
                         disabled={isPending}
                         onClick={() => handleAccept(order.id)}
-                        className="flex-1 text-xs h-10 min-h-[44px]"
+                        className="flex-1 h-12 text-sm font-bold shadow-xs min-h-[48px]"
                       >
-                        <CheckCircle size={16} weight="bold" />
-                        Accept Order
+                        {isPending ? "Confirming..." : "Confirm order"}
                       </Button>
+
                       <Button
                         type="button"
-                        size="sm"
                         variant="outline"
                         disabled={isPending}
-                        onClick={() =>
-                          openRejectOrCancelModal(order.id, order.orderNumber, "REJECT")
-                        }
-                        className="text-xs h-10 min-h-[44px] px-3 text-red border-red/30 hover:bg-red-light"
+                        onClick={() => handleOpenDialog(order.id, order.orderNumber, "REJECT")}
+                        className="h-12 text-xs font-semibold text-red hover:bg-red-50 hover:text-red-700 min-h-[48px]"
                       >
-                        <XCircle size={16} />
-                        Reject
+                        Can&apos;t accept
                       </Button>
                     </>
                   )}
 
-                  {order.status === "ACCEPTED" && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="turmeric"
-                      disabled={isPending}
-                      onClick={() => handleStatusChange(order.id, "PROCESSING")}
-                      className="flex-1 text-xs h-10 min-h-[44px] text-ink font-semibold"
-                    >
-                      Start Packing
-                    </Button>
-                  )}
+                  {["ACCEPTED", "PROCESSING"].includes(order.status) && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="turmeric"
+                        disabled={isPending}
+                        onClick={() => handleMarkReady(order.id)}
+                        className="flex-1 h-12 text-sm font-bold shadow-xs min-h-[48px]"
+                      >
+                        {isPending ? "Updating..." : "Mark packed and ready"}
+                      </Button>
 
-                  {order.status === "PROCESSING" && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="default"
-                      disabled={isPending}
-                      onClick={() => handleStatusChange(order.id, "READY")}
-                      className="flex-1 text-xs h-10 min-h-[44px]"
-                    >
-                      Mark Ready
-                    </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isPending}
+                        onClick={() => handleOpenDialog(order.id, order.orderNumber, "CANCEL")}
+                        className="h-12 text-xs font-semibold text-muted hover:text-red min-h-[48px]"
+                      >
+                        Cancel
+                      </Button>
+                    </>
                   )}
 
                   {order.status === "READY" && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="turmeric"
-                      disabled={isPending}
-                      onClick={() => handleStatusChange(order.id, "COMPLETED")}
-                      className="flex-1 text-xs h-10 min-h-[44px] text-ink font-semibold"
-                    >
-                      Mark Completed
-                    </Button>
+                    <>
+                      <Button
+                        type="button"
+                        variant="default"
+                        disabled={isPending}
+                        onClick={() => handleComplete(order.id)}
+                        className="flex-1 h-12 text-sm font-bold shadow-xs min-h-[48px]"
+                      >
+                        {isPending
+                          ? "Completing..."
+                          : isDelivery
+                          ? "Delivered to customer"
+                          : "Handed over to customer"}
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isPending}
+                        onClick={() => handleOpenDialog(order.id, order.orderNumber, "CANCEL")}
+                        className="h-12 text-xs font-semibold text-muted hover:text-red min-h-[48px]"
+                      >
+                        Cancel
+                      </Button>
+                    </>
                   )}
 
-                  <Link
-                    href={`/admin/orders/${order.id}`}
-                    className="flex items-center justify-center h-10 min-h-[44px] px-3 text-xs font-medium border border-border rounded-md hover:bg-page text-ink transition-colors"
-                  >
-                    View
-                  </Link>
-
-                  <Link
-                    href={`/admin/orders/${order.id}/print`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center h-10 min-h-[44px] px-3 text-xs font-medium border border-border rounded-md hover:bg-page text-muted hover:text-ink transition-colors"
-                    title="Print Slip"
-                  >
-                    <Printer size={16} />
-                  </Link>
+                  {["COMPLETED", "REJECTED", "CANCELLED"].includes(order.status) && (
+                    <div className="w-full text-center py-1">
+                      <span
+                        className={`text-xs font-bold px-3 py-1 rounded-full ${
+                          order.status === "COMPLETED"
+                            ? "bg-leaf-light text-leaf"
+                            : "bg-red-50 text-red-700"
+                        }`}
+                      >
+                        {statusLabel}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            );
+          })
+        )}
+      </div>
 
-      {/* Reject or Cancel Modal */}
-      <Dialog
-        open={rejectDialog.open}
-        onOpenChange={(open) => setRejectDialog((prev) => ({ ...prev, open }))}
-      >
-        <DialogContent className="sm:max-w-md">
+      {/* Reject / Cancel Reason Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {rejectDialog.action === "REJECT" ? "Reject Order Request" : "Cancel Order"}
+              {dialogOrder?.action === "REJECT" ? "Can't accept order" : "Cancel order"} #
+              {dialogOrder?.orderNumber}
             </DialogTitle>
-            <DialogDescription>
-              {rejectDialog.action === "REJECT"
-                ? `Order ${rejectDialog.orderNumber} will be rejected and the customer will see this reason.`
-                : `Order ${rejectDialog.orderNumber} will be cancelled. Any reserved stock will be automatically restored.`}
-            </DialogDescription>
           </DialogHeader>
 
-          {rejectDialog.error && (
-            <div className="p-3 bg-red-light border border-red text-xs text-red rounded">
-              {rejectDialog.error}
-            </div>
-          )}
+          <div className="space-y-3 py-2 text-xs">
+            {dialogError && (
+              <p className="p-2.5 rounded-lg bg-red-50 text-red-700 border border-red-200">
+                {dialogError}
+              </p>
+            )}
 
-          <div className="space-y-3 py-2">
-            <label className="block text-xs font-semibold text-ink">
-              Reason for {rejectDialog.action === "REJECT" ? "rejection" : "cancellation"}:
-            </label>
-            <textarea
-              value={rejectDialog.reason}
-              onChange={(e) =>
-                setRejectDialog((prev) => ({ ...prev, reason: e.target.value, error: null }))
-              }
-              rows={3}
-              placeholder="Enter reason..."
-              className="w-full text-sm p-2.5 rounded-md border border-border bg-page focus:ring-2 focus:ring-leaf focus:outline-none"
+            <p className="text-muted">
+              {dialogOrder?.action === "REJECT"
+                ? "Let the customer know why this order cannot be accepted right now:"
+                : "Enter the reason for cancelling this order (reserved stock will be restored):"}
+            </p>
+
+            <Input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Out of stock / Customer requested cancellation"
+              className="h-11"
+              required
             />
 
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {(rejectDialog.action === "REJECT"
-                ? [
-                    "Items temporarily out of stock",
-                    "Customer address out of delivery range",
-                    "Customer requested change",
-                    "Duplicate request",
-                  ]
-                : [
-                    "Customer requested cancellation",
-                    "Damaged items during packing",
-                    "Unable to reach customer phone",
-                    "Payment refused on delivery",
-                  ]
-              ).map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() =>
-                    setRejectDialog((prev) => ({ ...prev, reason: preset, error: null }))
-                  }
-                  className="text-[11px] px-2 py-1 bg-surface border border-border rounded text-muted hover:text-ink hover:bg-page transition-colors"
-                >
-                  {preset}
-                </button>
-              ))}
-            </div>
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                className="h-10 text-xs"
+              >
+                Back
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={isPending || !reason.trim()}
+                onClick={handleConfirmDialog}
+                className="h-10 text-xs font-bold"
+              >
+                {isPending ? "Confirming..." : dialogOrder?.action === "REJECT" ? "Reject order" : "Cancel order"}
+              </Button>
+            </DialogFooter>
           </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setRejectDialog((prev) => ({ ...prev, open: false }))}
-            >
-              Back
-            </Button>
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              disabled={isPending}
-              onClick={handleConfirmRejectOrCancel}
-              className="bg-red hover:bg-red/90 text-white"
-            >
-              {rejectDialog.action === "REJECT" ? "Confirm Rejection" : "Confirm Cancel"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-}
-
-function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  switch (status) {
-    case "PLACED":
-      return (
-        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-turmeric text-ink font-bold border border-turmeric-dark/20 shadow-xs">
-          New Request
-        </span>
-      );
-    case "ACCEPTED":
-      return (
-        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-leaf-light text-leaf font-semibold border border-leaf/20">
-          Accepted
-        </span>
-      );
-    case "PROCESSING":
-      return (
-        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200">
-          Packing
-        </span>
-      );
-    case "READY":
-      return (
-        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200">
-          Ready
-        </span>
-      );
-    case "COMPLETED":
-      return (
-        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
-          Completed
-        </span>
-      );
-    case "REJECTED":
-      return (
-        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium border border-gray-200">
-          Rejected
-        </span>
-      );
-    case "CANCELLED":
-      return (
-        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-red-50 text-red font-medium border border-red/20">
-          Cancelled
-        </span>
-      );
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
 }

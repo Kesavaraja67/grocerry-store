@@ -1,141 +1,74 @@
 # Pandian Store — Shop Owner Guide (கடை உரிமையாளர் கையேடு)
 
-Welcome to the **Pandian Store** Owner Portal (`/admin`). This guide is written in simple, plain language to help you run your daily shop operations smoothly.
+This simple guide covers the 5 screens in your owner portal (`/admin`). Everything is designed to be tapped directly from your phone.
+
+இந்த கையேடு உங்கள் கடைக்கான 5 திரைகளையும் எளிமையாக விளக்குகிறது.
 
 ---
 
-## 1. Quick Start & Logging In
+## 1. Home · முகப்பு (`/admin`)
 
-1. Open your browser and navigate to `/admin`.
-2. Enter your email and password (initial credentials provided in `.env`).
-3. After logging in, you will see your **Dashboard** (`/admin`) with today's summary:
-   - **New orders**: Incoming requests from customers waiting for confirmation.
-   - **Low stock**: Items running low that need wholesale purchase.
-   - **Stock valuation**: Total purchase value of current inventory.
-   - **Prices to review**: Products where new wholesale purchase prices require selling price updates.
+Your daily shop workstation.
 
-> **Tip:** You will stay logged in for 14 days on this device.
-
----
-
-## 2. Privacy Mode (மறைவுப் பயன்முறை)
-
-If customers or visitors are standing near your counter or looking at your screen, turn on **Privacy Mode**:
-
-- Click the **"Privacy mode"** (Eye icon) button in the top bar.
-- When active, all wholesale purchase costs, markup percentages, and estimated profit amounts are blurred out.
-- The selling prices remain visible so you can still check customer prices.
-- Click it again (**"Costs masked"**) anytime to reveal costs.
+- **Taking orders toggle (ஆர்டர் வாங்குதல்)**: Tap the toggle at the top to pause or resume accepting online orders anytime.
+- **Search (தேடல்)**: Tap the microphone 🎙 to search items or wholesale shops by speaking in Tamil or English.
+- **Three Big Buttons**:
+  - **New orders (புதிய ஆர்டர்கள்)**: Shows waiting customer requests.
+  - **Record a purchase (வாங்கியதை பதிவு செய்)**: Tap when you return with wholesale goods.
+  - **Check an item (பொருள் பார்க்க)**: Look up stock or price for any item.
+- **Needs attention (கவனம் தேவை)**: Shows items that are running low or out of stock.
 
 ---
 
-## 3. Recording Wholesale Purchases (மொத்த கொள்முதல் பதிவு)
+## 2. Orders · ஆர்டர்கள் (`/admin/orders`)
 
-When you return from the wholesale market (or receive a delivery from a wholesale merchant):
+Manage customer orders in three simple tabs:
 
-1. Go to **Purchases** (`/admin/purchases`) and click **"Record Purchase"** (or tap **"Buy"** in the mobile navigation).
-2. **Select Wholesale Store (Supplier)**:
-   - Choose the supplier from the dropdown, or click **"+ Add Wholesale Store"** to quickly add a new merchant with their phone and area.
-3. **Date & Bill Number**:
-   - Set the purchase bill date and optional bill/invoice number.
-4. **Add Items**:
-   - For each item, search for the product name (in English or Tamil).
-   - If it's a new item not yet in your system, click **"+ Add Product"** to create it on the spot.
-   - **Units & Pack Helper**:
-     - If you bought loose or base units (e.g., 50 kg of rice), enter `50` and select `kg`.
-     - If you bought in wholesale packs (e.g., 2 boxes of 24 pieces each), use the **Pack Helper**: enter `2` boxes, and `24` pieces per box. The system automatically converts this to `48 pieces` for inventory.
-   - **Line Total & Rate**:
-     - Enter either what you paid in total for the line or the rate per unit; the system automatically calculates the other.
-5. **Extra Charges (ஏற்றுக்கூலி, வண்டி வாடகை)**:
-   - If you paid transport, cartage, or auto loading charges for this bill (e.g., ₹200), enter it in **"Extra charges"**.
-   - The system automatically and proportionally allocates this extra charge across all items on the bill so your true unit cost is 100% accurate.
-6. **Save Purchase**:
-   - Click **"Save Purchase"**.
-   - If any item's purchase price has changed, a **"Review Selling Prices"** window will appear immediately, showing recommended selling prices with your standard profit margins.
+- **New (புதியவை)**: Incoming requests. Tap **"Confirm order"** to accept and automatically reserve stock. Tap **"Can't accept"** if you are out of stock.
+- **In progress (நடக்கிறது)**: Orders being packed. Tap **"Mark packed and ready"** when ready for pickup or delivery.
+- **Done (முடிந்தவை)**: Tap **"Delivered to customer"** or **"Handed over"** to finish the order.
+- **WhatsApp button**: Tap on any order card to directly chat with the customer on WhatsApp with order details pre-filled.
 
 ---
 
-## 4. Managing Customer Orders (வாடிக்கையாளர் ஆர்டர்கள்)
+## 3. Buy · வாங்குதல் (`/admin/buy`)
 
-Customers submit order requests through the storefront (`/`).
+Record goods you bought from wholesale markets in 3 simple steps:
 
-### Order Status Stages:
-
-1. **New Request (`PLACED` / புதியவை)**:
-   - Customer has submitted the cart with their phone number and delivery address (or store pickup).
-   - Click **"Accept Order"**: The system verifies you have enough stock, reserves the stock, and records the cost.
-   - **Need to change quantity?** If a customer requested 2 kg but you only have 1 kg, click **"Adjust Items"** before accepting to modify quantities or remove items.
-   - If you cannot fulfill the order, click **"Reject"** and pick a reason (e.g., "Out of stock").
-2. **Accepted (`ACCEPTED` / ஏற்றுக்கொள்ளப்பட்டது)**:
-   - Order is confirmed and stock is reserved.
-   - Click **"Start Packing"** when you begin weighing and bagging the items.
-3. **Being Packed (`PROCESSING` / பேக்கிங்)**:
-   - Items are being weighed, bagged, and boxed.
-   - Click **"Mark Ready"** once packed and packaged.
-4. **Ready (`READY` / தயார்)**:
-   - Order is ready for customer pickup at counter, or ready for delivery person to take.
-   - When delivered or collected, click **"Complete Order"**.
-5. **Cancelled (`CANCELLED` / ரத்து)**:
-   - If a customer calls to cancel after acceptance, click **"Cancel Order"**.
-   - The system **automatically restores the reserved stock** back to your inventory!
-
-### Communicating with Customers:
-
-- Every order screen has a **"WhatsApp Customer"** button. Clicking it opens a pre-composed WhatsApp message with the customer's name, order number, current status, item breakdown, and total bill amount.
-- Click **"Call"** to phone the customer directly.
-
-### Printing Order Slips (A5 / Thermal):
-
-- Click **"Print Slip"** on any order card or detail screen.
-- A clean, professional **Order Slip** opens.
-- Press **Ctrl + P** (or tap **"Print Order Slip"**) to print on standard A5 or thermal receipt paper.
-- The order slip shows the shop name, phone, customer address, items list, and total amount. It strictly hides internal wholesale costs.
+1. **Which shop? (எந்த கடை?)**: Tap a recent shop or search by voice/text. Tap **"+ Add shop"** if it is a new merchant.
+2. **What did you buy? (என்ன வாங்கினீர்கள்?)**:
+   - Pick the item (or tap **"+ Add a new item"** to add an item in 5 quick fields).
+   - Enter how many (e.g. `25 kg` or `2 boxes`).
+   - Enter how much you paid (either the total bill amount or the rate per unit).
+   - Tap **"+ Add item to bill"**. Add as many items as you bought.
+3. **Review & Save (சரிபார்த்து சேமி)**: Check your total, add bill number or transport charge if any, and tap **"Save purchase"**.
+   - After saving, if prices changed, use the **Price Slider** to easily set your selling price!
 
 ---
 
-## 5. Pricing Engine & Profit Margins (விலை நிர்ணயம்)
+## 4. Items · பொருட்கள் (`/admin/items`)
 
-Navigate to **Pricing** (`/admin/pricing`) to review and adjust your catalog prices:
+All items in your grocery store.
 
-- **Markup vs. Margin**:
-  - **Markup** is the percentage added on top of what you paid (e.g., buy at ₹100 + 20% markup = ₹120 selling price).
-  - **Margin** is the percentage of profit in the final rupee collected (₹20 profit on ₹120 = 16.7% margin).
-- **Price Suggestions**:
-  - The pricing engine gives you 3 calculated suggestions:
-    - **Low** (competitive neighbourhood price)
-    - **Recommended** (your standard category markup, typically 12% to 20%)
-    - **High** (premium price)
-- **MRP Guard**:
-  - The system will never allow a selling price higher than the Maximum Retail Price (MRP).
-- **Below-Cost Alert**:
-  - If you enter a price below what you paid, a clear red warning appears to prevent accidental losses.
-- **Cost Basis Toggle**:
-  - You can base your pricing on either **Latest Purchase Cost** (replacement cost) or **Moving Average Cost** (weighted ledger average).
+- **Search & Chips**: Search by name or Tamil name. Use the filter chips (**All · Running low · Out of stock · Needs price**).
+- **Item Detail (`/admin/items/[id]`)**:
+  - **Price Slider (விலை மாற்று)**: Slide to set your selling price in rupees. Shows your profit in plain rupees and percent. MRP and cost safeguards prevent selling at a loss by mistake.
+  - **Stock Fix (சரக்கு மாற்று)**: Easily add, remove, or set stock for damaged, expired, or recounted goods.
+  - **Nicknames (புனைப்பெயர்)**: Add colloquial names (e.g. `thenga ennai`) so voice search finds it instantly.
+  - **Past Purchases**: See what you paid and which shop you bought it from previously.
 
 ---
 
-## 6. Inventory & Stock Adjustments (சரக்கு இருப்பு)
+## 5. Shops · கடைகள் (`/admin/shops`)
 
-Navigate to **Inventory** (`/admin/inventory`) to track stock levels:
+Your wholesale merchants and suppliers.
 
-- **Filter by Status**: View In Stock, Low Stock (below threshold), or Out of Stock items.
-- **Adjust Stock**:
-  - If goods are damaged by rain, rodent, or expired, click **"Adjust Stock"**.
-  - Choose **Remove**, enter the quantity, select the reason (**Damaged**, **Expired**, or **Count Correction**), and add an optional note.
-  - The ledger keeps a permanent chronological record of every movement.
+- See when you last visited each wholesale shop.
+- Tap a shop to view its phone number, call them with one tap, see all items you buy from them, and tap **"Record a purchase from this shop"**.
 
 ---
 
-## 7. Daily Routine Checklist
+## 6. Settings & Privacy Mode · அமைப்புகள்
 
-- **Morning (7:00 AM)**:
-  - Check **Dashboard** (`/admin`) for pending overnight orders.
-  - Check **Low Stock** alerts to write your market purchase list.
-- **Midday**:
-  - Record wholesale purchase bills from market trips.
-  - Review and confirm incoming customer delivery requests.
-  - Print order slips and bag items.
-- **Evening (9:00 PM)**:
-  - Check completed orders and total collection.
-  - If you are closing for a festival or holiday, go to **Settings** (`/admin/settings`) and toggle **"Accept Online Orders"** to Paused.
-
+- **Privacy mode 👁**: Tap the Eye icon in the top bar to hide wholesale costs from customers looking at your screen.
+- **Settings ⚙**: Tap the Gear icon in the top bar to set shop hours, phone numbers, delivery options, change your password, switch language mode (Both / Tamil / English), or view your public store.

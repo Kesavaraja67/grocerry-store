@@ -121,6 +121,7 @@ model Product {
   isPublished   Boolean         @default(false)
   isFeatured    Boolean         @default(false)
   isArchived    Boolean         @default(false)
+  aliases       String[]        @default([])
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   category      Category        @relation(fields: [categoryId], references: [id])

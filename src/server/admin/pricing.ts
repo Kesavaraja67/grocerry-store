@@ -283,6 +283,12 @@ export async function updateProductSellingPrice(
       tx
     );
 
+    revalidatePath("/admin/pricing");
+    revalidatePath("/admin/items");
+    revalidatePath(`/admin/items/${productId}`);
+    revalidatePath("/admin/products");
+    revalidatePath("/", "layout");
+
     return { success: true, newPrice };
   });
 }

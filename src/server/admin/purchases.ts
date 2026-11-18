@@ -1,6 +1,7 @@
 "use server";
 
 import "server-only";
+import { revalidatePath } from "next/cache";
 import { Decimal } from "decimal.js";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db";
@@ -387,105 +388,108 @@ export async function recordPurchase(data: PurchaseFormInput) {
   const owner = await requireOwner();
   const validated = purchaseSchema.parse(data);
 
-  return await prisma.$transaction(async (tx) => {
-    // 1. Fetch supplier
-    const supplier = await tx.supplier.findUnique({
-      where: { id: validated.supplierId },
-    });
-    if (!supplier) {
-      throw new Error("Wholesale store (supplier) not found.");
-    }
+  // 1. Fetch supplier outside transaction
+  const supplier = await prisma.supplier.findUnique({
+    where: { id: validated.supplierId },
+  });
+  if (!supplier) {
+    throw new Error("Wholesale store (supplier) not found.");
+  }
 
-    // 2. Fetch all products and units in the purchase lines
-    const productIds = validated.items.map((i) => i.productId);
-    const unitIds = validated.items.map((i) => i.unitId);
+  // 2. Fetch all products and units in the purchase lines outside transaction
+  const productIds = validated.items.map((i) => i.productId);
+  const unitIds = validated.items.map((i) => i.unitId);
 
-    const products = await tx.product.findMany({
+  const [products, units] = await Promise.all([
+    prisma.product.findMany({
       where: { id: { in: productIds } },
       include: {
         baseUnit: true,
         category: true,
         cost: true,
       },
-    });
-
-    const units = await tx.unit.findMany({
+    }),
+    prisma.unit.findMany({
       where: { id: { in: unitIds } },
-    });
+    }),
+  ]);
 
-    const productMap = new Map(products.map((p) => [p.id, p]));
-    const unitMap = new Map(units.map((u) => [u.id, u]));
+  const productMap = new Map(products.map((p) => [p.id, p]));
+  const unitMap = new Map(units.map((u) => [u.id, u]));
 
-    // 3. Convert quantities to base unit and prepare lines
-    const preparedLines: {
-      productId: string;
-      unitId: string;
-      quantity: Decimal;
-      unitsPerPack: Decimal | null;
-      baseQty: Decimal;
-      lineAmount: Decimal;
-    }[] = [];
+  // 3. Convert quantities to base unit and prepare lines
+  const preparedLines: {
+    productId: string;
+    unitId: string;
+    quantity: Decimal;
+    unitsPerPack: Decimal | null;
+    baseQty: Decimal;
+    lineAmount: Decimal;
+  }[] = [];
 
-    for (const item of validated.items) {
-      const product = productMap.get(item.productId);
-      if (!product) {
-        throw new Error(`Product ${item.productId} not found.`);
-      }
-
-      const inputUnit = unitMap.get(item.unitId);
-      if (!inputUnit) {
-        throw new Error(`Unit ${item.unitId} not found.`);
-      }
-
-      const baseUnit = product.baseUnit;
-      const conv = convertToBaseQuantity(
-        item.quantity,
-        inputUnit,
-        baseUnit,
-        item.unitsPerPack ?? null
-      );
-      const baseQty = conv.baseQty;
-
-      if (baseQty.lte(0)) {
-        throw new Error(`Calculated base quantity for ${product.name} must be greater than zero.`);
-      }
-
-      preparedLines.push({
-        productId: item.productId,
-        unitId: item.unitId,
-        quantity: new Decimal(item.quantity),
-        unitsPerPack: item.unitsPerPack ? new Decimal(item.unitsPerPack) : null,
-        baseQty,
-        lineAmount: new Decimal(item.lineAmount),
-      });
+  for (const item of validated.items) {
+    const product = productMap.get(item.productId);
+    if (!product) {
+      throw new Error(`Product ${item.productId} not found.`);
     }
 
-    // 4. Allocate extra charges and compute unitCost per line
-    const extraChargesDecimal = new Decimal(validated.extraCharges ?? 0);
-    const allocatedCosts = allocateExtraChargesAndComputeUnitCosts(
-      preparedLines.map((l) => ({ lineAmount: l.lineAmount, baseQty: l.baseQty })),
-      extraChargesDecimal
-    );
+    const inputUnit = unitMap.get(item.unitId);
+    if (!inputUnit) {
+      throw new Error(`Unit ${item.unitId} not found.`);
+    }
 
-    const subtotalDecimal = preparedLines.reduce(
-      (sum, line) => sum.plus(line.lineAmount),
-      new Decimal(0)
+    const baseUnit = product.baseUnit;
+    const conv = convertToBaseQuantity(
+      item.quantity,
+      inputUnit,
+      baseUnit,
+      item.unitsPerPack ?? null
     );
-    const totalDecimal = subtotalDecimal.plus(extraChargesDecimal);
+    const baseQty = conv.baseQty;
 
-    // 5. Create Purchase record
-    const purchase = await tx.purchase.create({
-      data: {
-        supplierId: validated.supplierId,
-        purchaseDate: new Date(validated.purchaseDate),
-        invoiceNo: validated.invoiceNo || null,
-        subtotal: subtotalDecimal,
-        extraCharges: extraChargesDecimal,
-        total: totalDecimal,
-        notes: validated.notes || null,
-        status: "ACTIVE",
-      },
+    if (baseQty.lte(0)) {
+      throw new Error(`Calculated base quantity for ${product.name} must be greater than zero.`);
+    }
+
+    preparedLines.push({
+      productId: item.productId,
+      unitId: item.unitId,
+      quantity: new Decimal(item.quantity),
+      unitsPerPack: item.unitsPerPack ? new Decimal(item.unitsPerPack) : null,
+      baseQty,
+      lineAmount: new Decimal(item.lineAmount),
     });
+  }
+
+  // 4. Allocate extra charges and compute unitCost per line
+  const extraChargesDecimal = new Decimal(validated.extraCharges ?? 0);
+  const allocatedCosts = allocateExtraChargesAndComputeUnitCosts(
+    preparedLines.map((l) => ({ lineAmount: l.lineAmount, baseQty: l.baseQty })),
+    extraChargesDecimal
+  );
+
+  const subtotalDecimal = preparedLines.reduce(
+    (sum, line) => sum.plus(line.lineAmount),
+    new Decimal(0)
+  );
+  const totalDecimal = subtotalDecimal.plus(extraChargesDecimal);
+
+  // 5. Run DB writes inside transaction with increased timeout for serverless Neon
+  const result = await prisma.$transaction(
+    async (tx) => {
+      // Create Purchase record
+      const purchase = await tx.purchase.create({
+        data: {
+          supplierId: validated.supplierId,
+          purchaseDate: new Date(validated.purchaseDate),
+          invoiceNo: validated.invoiceNo || null,
+          subtotal: subtotalDecimal,
+          extraCharges: extraChargesDecimal,
+          total: totalDecimal,
+          notes: validated.notes || null,
+          status: "ACTIVE",
+        },
+      });
 
     // 6. Create PurchaseItems, update stock, log StockMovement, and update ProductCost
     const priceReviewItems: PriceReviewItem[] = [];
@@ -628,7 +632,16 @@ export async function recordPurchase(data: PurchaseFormInput) {
       purchaseId: purchase.id,
       priceReviewItems,
     };
-  });
+  },
+  { maxWait: 15000, timeout: 30000 }
+  );
+
+  revalidatePath("/admin/purchases");
+  revalidatePath("/admin/buy");
+  revalidatePath("/admin/items");
+  revalidatePath("/admin");
+
+  return result;
 }
 
 /**

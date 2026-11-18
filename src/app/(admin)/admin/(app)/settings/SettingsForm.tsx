@@ -1,13 +1,28 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
+import { signOut } from "next-auth/react";
+import {
+  Storefront,
+  Lock,
+  SignOut,
+  Check,
+  WarningCircle,
+  Translate,
+} from "@phosphor-icons/react";
 import { updateShopSettings, changeOwnerPassword } from "@/server/admin/settings";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { useLang, type LanguageMode } from "@/context/LanguageContext";
+import { copy } from "@/lib/copy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface SettingsFormProps {
   initialSettings: {
@@ -32,30 +47,26 @@ interface SettingsFormProps {
 }
 
 export function SettingsForm({ initialSettings }: SettingsFormProps) {
+  const { mode, setMode } = useLang();
+
   const [form, setForm] = useState({
     shopName: initialSettings.shopName,
-    tagline: initialSettings.tagline || "",
     phone: initialSettings.phone,
     whatsapp: initialSettings.whatsapp || "",
     addressLine: initialSettings.addressLine,
-    area: initialSettings.area,
-    city: initialSettings.city,
-    pincode: initialSettings.pincode,
+    area: initialSettings.area || "Town",
+    city: initialSettings.city || "Madurai",
+    pincode: initialSettings.pincode || "625001",
     hoursText: initialSettings.hoursText,
     deliveryEnabled: initialSettings.deliveryEnabled,
     pickupEnabled: initialSettings.pickupEnabled,
-    deliveryNote: initialSettings.deliveryNote || "",
-    minOrderAmount: initialSettings.minOrderAmount,
-    deliveryFee: initialSettings.deliveryFee,
-    freeDeliveryAbove: initialSettings.freeDeliveryAbove ?? "",
-    acceptingOrders: initialSettings.acceptingOrders,
-    roundingMode: initialSettings.roundingMode,
+    minOrderAmount: initialSettings.minOrderAmount || 0,
   });
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Password change state
+  // Password modal
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -71,14 +82,27 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
 
     try {
       await updateShopSettings({
-        ...form,
+        shopName: form.shopName,
+        tagline: initialSettings.tagline,
+        phone: form.phone,
+        whatsapp: form.whatsapp || null,
+        addressLine: form.addressLine,
+        area: form.area,
+        city: form.city,
+        pincode: form.pincode,
+        hoursText: form.hoursText,
+        deliveryEnabled: form.deliveryEnabled,
+        pickupEnabled: form.pickupEnabled,
+        deliveryNote: initialSettings.deliveryNote,
         minOrderAmount: Number(form.minOrderAmount),
-        deliveryFee: Number(form.deliveryFee),
-        freeDeliveryAbove: form.freeDeliveryAbove !== "" ? Number(form.freeDeliveryAbove) : null,
+        deliveryFee: Number(initialSettings.deliveryFee),
+        freeDeliveryAbove: initialSettings.freeDeliveryAbove,
+        acceptingOrders: initialSettings.acceptingOrders,
+        roundingMode: initialSettings.roundingMode,
       });
-      setMessage({ type: "success", text: "Settings saved successfully." });
+      setMessage({ type: "success", text: copy.admin.settings.settingsSaved.en });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to save settings.";
+      const msg = err instanceof Error ? err.message : copy.errors.generic;
       setMessage({ type: "error", text: msg });
     } finally {
       setSaving(false);
@@ -119,326 +143,300 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
       {message && (
         <div
-          role="alert"
-          className={`p-3.5 rounded-md text-xs font-semibold border ${
+          className={`p-3.5 rounded-xl text-sm flex items-center gap-2.5 ${
             message.type === "success"
-              ? "bg-leaf-light text-leaf border-[#D5E3DA]"
-              : "bg-red-light text-red border-[#FAD2CF]"
+              ? "bg-leaf-light text-leaf border border-[#D5E3DA]"
+              : "bg-red-50 text-red-700 border border-red-200"
           }`}
         >
-          {message.text}
+          {message.type === "success" ? <Check size={18} /> : <WarningCircle size={18} />}
+          <span>{message.text}</span>
         </div>
       )}
 
-      {/* 1. Shop Profile */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Shop profile</CardTitle>
-          <CardDescription>
-            These details appear on your storefront header, footer, and printable order slips.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Shop name *</label>
-              <Input
-                required
-                value={form.shopName}
-                onChange={(e) => setForm({ ...form, shopName: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Tagline</label>
-              <Input
-                value={form.tagline}
-                onChange={(e) => setForm({ ...form, tagline: e.target.value })}
-                placeholder="Fresh groceries for your family"
-              />
-            </div>
-          </div>
+      {/* 1. Language Mode */}
+      <section className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+        <div className="flex items-center gap-2 text-ink">
+          <Translate size={20} weight="bold" className="text-leaf" />
+          <h2 className="font-bold text-sm font-heading">
+            {copy.admin.settings.languageSection.en}
+          </h2>
+          <span className="text-xs text-muted font-tamil">
+            ({copy.admin.settings.languageSection.ta})
+          </span>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Phone number *</label>
-              <Input
-                required
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">WhatsApp number</label>
-              <Input
-                value={form.whatsapp}
-                onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                placeholder="+91 90000 00000"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-ink">Street address *</label>
-            <Input
-              required
-              value={form.addressLine}
-              onChange={(e) => setForm({ ...form, addressLine: e.target.value })}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Area / Locality *</label>
-              <Input
-                required
-                value={form.area}
-                onChange={(e) => setForm({ ...form, area: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">City *</label>
-              <Input
-                required
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Pincode *</label>
-              <Input
-                required
-                maxLength={6}
-                value={form.pincode}
-                onChange={(e) => setForm({ ...form, pincode: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-ink">Opening hours text *</label>
-            <Input
-              required
-              value={form.hoursText}
-              onChange={(e) => setForm({ ...form, hoursText: e.target.value })}
-              placeholder="Monday – Sunday: 7:00 AM – 9:30 PM"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 2. Order Acceptance & Fulfilment */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Orders & Fulfilment</CardTitle>
-          <CardDescription>
-            Control customer order requests and delivery parameters.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-3 p-3 bg-page rounded-md border border-border">
-            <Checkbox
-              id="acceptingOrders"
-              checked={form.acceptingOrders}
-              onCheckedChange={(checked) => setForm({ ...form, acceptingOrders: !!checked })}
-            />
-            <label htmlFor="acceptingOrders" className="text-sm font-semibold text-ink cursor-pointer">
-              Accept customer order requests on storefront
-            </label>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-center space-x-3 p-3 bg-surface rounded-md border border-border">
-              <Checkbox
-                id="deliveryEnabled"
-                checked={form.deliveryEnabled}
-                onCheckedChange={(checked) => setForm({ ...form, deliveryEnabled: !!checked })}
-              />
-              <label htmlFor="deliveryEnabled" className="text-sm font-medium text-ink cursor-pointer">
-                Enable Home Delivery
-              </label>
-            </div>
-
-            <div className="flex items-center space-x-3 p-3 bg-surface rounded-md border border-border">
-              <Checkbox
-                id="pickupEnabled"
-                checked={form.pickupEnabled}
-                onCheckedChange={(checked) => setForm({ ...form, pickupEnabled: !!checked })}
-              />
-              <label htmlFor="pickupEnabled" className="text-sm font-medium text-ink cursor-pointer">
-                Enable Shop Pickup
-              </label>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-ink">Delivery note</label>
-            <Input
-              value={form.deliveryNote}
-              onChange={(e) => setForm({ ...form, deliveryNote: e.target.value })}
-              placeholder="We deliver within 3 km of the shop."
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Minimum order (₹)</label>
-              <Input
-                type="number"
-                min={0}
-                value={form.minOrderAmount}
-                onChange={(e) => setForm({ ...form, minOrderAmount: Number(e.target.value) })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Delivery fee (₹)</label>
-              <Input
-                type="number"
-                min={0}
-                value={form.deliveryFee}
-                onChange={(e) => setForm({ ...form, deliveryFee: Number(e.target.value) })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink">Free delivery above (₹)</label>
-              <Input
-                type="number"
-                min={0}
-                value={form.freeDeliveryAbove}
-                onChange={(e) => setForm({ ...form, freeDeliveryAbove: e.target.value })}
-                placeholder="Optional threshold"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 3. Pricing & Rounding Rule */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Pricing engine rounding</CardTitle>
-          <CardDescription>
-            Choose how suggested prices are rounded when calculating markup from wholesale cost.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5 max-w-sm">
-            <label className="text-xs font-semibold text-ink">Price rounding mode</label>
-            <Select
-              value={form.roundingMode}
-              onValueChange={(val: "NONE" | "NEAREST_HALF" | "NEAREST_1" | "UP_1") =>
-                setForm({ ...form, roundingMode: val })
-              }
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              { key: "both", labelEn: "Both", labelTa: "இரண்டும்" },
+              { key: "ta", labelEn: "Tamil", labelTa: "தமிழ் மட்டும்" },
+              { key: "en", labelEn: "English", labelTa: "English only" },
+            ] as const
+          ).map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setMode(item.key as LanguageMode)}
+              className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-xl border text-xs font-semibold min-h-[44px] transition-all ${
+                mode === item.key
+                  ? "bg-leaf text-white border-leaf shadow-xs"
+                  : "bg-page text-ink border-border hover:bg-leaf-light"
+              }`}
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="UP_1">Round up to next whole rupee (e.g. ₹61.20 → ₹62.00)</SelectItem>
-                <SelectItem value="NEAREST_1">Round to nearest whole rupee (e.g. ₹61.40 → ₹61.00)</SelectItem>
-                <SelectItem value="NEAREST_HALF">Round to nearest 50 paise (e.g. ₹61.20 → ₹61.50)</SelectItem>
-                <SelectItem value="NONE">Exact 2 decimals (no whole rupee rounding)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+              <span>{item.labelEn}</span>
+              <span className={`text-[10px] font-tamil ${mode === item.key ? "text-white/80" : "text-muted"}`}>
+                {item.labelTa}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
 
-      {/* 4. Security & Account */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Owner security</CardTitle>
-          <CardDescription>
-            Update your owner login password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      {/* 2. Shop Details */}
+      <section className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+        <h2 className="font-bold text-sm text-ink font-heading border-b border-border/70 pb-2.5">
+          {copy.admin.settings.shopSection.en}
+        </h2>
+
+        <div>
+          <label className="block text-xs font-bold text-ink mb-1.5">
+            {copy.admin.settings.shopName.en}
+          </label>
+          <Input
+            value={form.shopName}
+            onChange={(e) => setForm({ ...form, shopName: e.target.value })}
+            className="h-11 bg-page"
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-ink mb-1.5">
+              {copy.admin.settings.phone.en}
+            </label>
+            <Input
+              type="tel"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="h-11 bg-page font-mono"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-ink mb-1.5">
+              {copy.admin.settings.whatsapp.en}
+            </label>
+            <Input
+              type="tel"
+              value={form.whatsapp}
+              onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
+              placeholder="e.g. 9840012345"
+              className="h-11 bg-page font-mono"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-ink mb-1.5">
+            {copy.admin.settings.address.en}
+          </label>
+          <Input
+            value={form.addressLine}
+            onChange={(e) => setForm({ ...form, addressLine: e.target.value })}
+            className="h-11 bg-page"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-ink mb-1.5">
+            {copy.admin.settings.hours.en}
+          </label>
+          <Input
+            value={form.hoursText}
+            onChange={(e) => setForm({ ...form, hoursText: e.target.value })}
+            placeholder="e.g. 7:00 AM – 9:30 PM"
+            className="h-11 bg-page"
+            required
+          />
+        </div>
+      </section>
+
+      {/* 3. Ordering Settings */}
+      <section className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+        <h2 className="font-bold text-sm text-ink font-heading border-b border-border/70 pb-2.5">
+          {copy.admin.settings.orderingSection.en}
+        </h2>
+
+        <div className="space-y-3">
+          <label className="flex items-center justify-between p-3 rounded-xl bg-page border border-border cursor-pointer min-h-[48px]">
+            <div>
+              <p className="text-sm font-semibold text-ink">
+                {copy.admin.settings.deliveryOn.en}
+              </p>
+              <p className="text-xs text-muted">Allow customers to request home delivery</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={form.deliveryEnabled}
+              onChange={(e) => setForm({ ...form, deliveryEnabled: e.target.checked })}
+              className="h-5 w-5 rounded border-border text-leaf focus:ring-leaf cursor-pointer"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3 rounded-xl bg-page border border-border cursor-pointer min-h-[48px]">
+            <div>
+              <p className="text-sm font-semibold text-ink">
+                {copy.admin.settings.pickupOn.en}
+              </p>
+              <p className="text-xs text-muted">Allow customers to pack and pick up at the shop</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={form.pickupEnabled}
+              onChange={(e) => setForm({ ...form, pickupEnabled: e.target.checked })}
+              className="h-5 w-5 rounded border-border text-leaf focus:ring-leaf cursor-pointer"
+            />
+          </label>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-ink mb-1.5">
+            {copy.admin.settings.minimumOrder.en} (₹)
+          </label>
+          <Input
+            type="number"
+            min="0"
+            value={form.minOrderAmount}
+            onChange={(e) => setForm({ ...form, minOrderAmount: Number(e.target.value) })}
+            className="h-11 bg-page font-mono"
+          />
+        </div>
+      </section>
+
+      {/* Save Button */}
+      <Button
+        type="submit"
+        variant="default"
+        disabled={saving}
+        className="w-full h-12 text-sm font-bold shadow-xs min-h-[48px]"
+      >
+        {saving ? "Saving..." : copy.admin.settings.saveSettings.en}
+      </Button>
+
+      {/* 4. Quick Actions: View Store, Change Password, Log Out */}
+      <div className="pt-2 space-y-2.5 border-t border-border">
+        <Link
+          href="/"
+          className="flex items-center justify-center gap-2 w-full p-3.5 rounded-xl border-2 border-border bg-surface hover:bg-leaf-light hover:border-leaf/30 text-sm font-bold text-ink transition-colors min-h-[48px]"
+        >
+          <Storefront size={18} weight="bold" className="text-leaf" />
+          <span>{copy.admin.settings.viewStore.en}</span>
+        </Link>
+
+        <div className="grid grid-cols-2 gap-2.5">
           <Button
             type="button"
             variant="outline"
             onClick={() => setPasswordModalOpen(true)}
+            className="h-12 text-xs font-bold gap-2 min-h-[48px]"
           >
-            Change owner password
+            <Lock size={16} />
+            <span>{copy.admin.settings.changePassword.en}</span>
           </Button>
-          <div className="rounded-md bg-page border border-border p-3 text-xs text-muted space-y-1 max-w-md">
-            <p className="font-semibold text-ink">MVP Default Owner Credentials</p>
-            <p className="font-mono text-[11px]">
-              Email: <span className="text-ink">owner@pandianstore.local</span>
-            </p>
-            <p className="font-mono text-[11px]">
-              Default Password: <span className="text-ink">ChangeThisPassword123!</span>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Sticky Save Bar */}
-      <div className="sticky bottom-0 bg-surface/95 backdrop-blur-xs p-4 -mx-4 -mb-4 sm:mx-0 sm:mb-0 border-t sm:border border-border sm:rounded-lg flex items-center justify-between shadow-xs">
-        <span className="text-xs text-muted">All changes update storefront immediately.</span>
-        <Button type="submit" variant="turmeric" disabled={saving} className="font-semibold px-6">
-          {saving ? "Saving..." : "Save settings"}
-        </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            className="h-12 text-xs font-bold text-red hover:bg-red-50 hover:text-red-700 gap-2 min-h-[48px]"
+          >
+            <SignOut size={16} />
+            <span>{copy.admin.settings.logout.en}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Change Password Dialog */}
       <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Change owner password</DialogTitle>
+            <DialogTitle>{copy.admin.settings.changePassword.en}</DialogTitle>
           </DialogHeader>
+
           <form onSubmit={handlePasswordSubmit} className="space-y-4 py-2">
             {passwordError && (
-              <div className="p-2.5 rounded bg-red-light text-red text-xs font-medium border border-[#FAD2CF]">
+              <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">
                 {passwordError}
-              </div>
+              </p>
             )}
             {passwordSuccess && (
-              <div className="p-2.5 rounded bg-leaf-light text-leaf text-xs font-medium border border-[#D5E3DA]">
-                Password updated successfully!
-              </div>
+              <p className="text-xs text-emerald-700 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
+                Password changed successfully!
+              </p>
             )}
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-ink">Current password *</label>
+            <div>
+              <label className="block text-xs font-bold text-ink mb-1.5">
+                {copy.admin.settings.currentPassword.en}
+              </label>
               <Input
                 type="password"
-                required
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-ink">New password (min 8 characters) *</label>
-              <Input
-                type="password"
                 required
-                minLength={8}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-ink">Confirm new password *</label>
-              <Input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="h-11"
               />
             </div>
 
-            <DialogFooter>
+            <div>
+              <label className="block text-xs font-bold text-ink mb-1.5">
+                {copy.admin.settings.newPassword.en}
+              </label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                required
+                className="h-11"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-ink mb-1.5">
+                Confirm new password
+              </label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="h-11"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setPasswordModalOpen(false)}
-                disabled={changingPassword}
+                className="h-11"
               >
                 Cancel
               </Button>
-              <Button type="submit" variant="default" disabled={changingPassword}>
+              <Button
+                type="submit"
+                variant="default"
+                disabled={changingPassword}
+                className="h-11 font-bold"
+              >
                 {changingPassword ? "Updating..." : "Update password"}
               </Button>
             </DialogFooter>
@@ -448,4 +446,3 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
     </form>
   );
 }
-

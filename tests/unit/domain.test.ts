@@ -312,6 +312,7 @@ describe("Domain: Order State Machine & Validation", () => {
     expect(canTransitionOrder("PLACED", "REJECTED")).toBe(true);
     expect(canTransitionOrder("PLACED", "CANCELLED")).toBe(true);
     expect(canTransitionOrder("ACCEPTED", "PROCESSING")).toBe(true);
+    expect(canTransitionOrder("ACCEPTED", "READY")).toBe(true);
     expect(canTransitionOrder("PROCESSING", "READY")).toBe(true);
     expect(canTransitionOrder("READY", "COMPLETED")).toBe(true);
   });

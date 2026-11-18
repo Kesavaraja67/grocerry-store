@@ -13,32 +13,24 @@ import {
   X,
   House,
   ClipboardText,
-  Receipt,
+  ShoppingCart,
   Package,
   Storefront,
-  Stack,
-  CurrencyInr,
-  SquaresFour,
-  ChartBar,
   Gear,
-  ArrowLeft,
 } from "@phosphor-icons/react";
+import { MicButton } from "@/components/admin/MicButton";
 import { Button } from "@/components/ui/button";
 
 interface AdminTopBarProps {
   userEmail?: string | null;
 }
 
-const MOBILE_NAV_LINKS = [
-  { label: "Dashboard", href: "/admin", icon: House },
+const NAV_LINKS = [
+  { label: "Home", href: "/admin", icon: House },
   { label: "Orders", href: "/admin/orders", icon: ClipboardText },
-  { label: "Purchases", href: "/admin/purchases", icon: Receipt },
-  { label: "Products", href: "/admin/products", icon: Package },
-  { label: "Wholesale Stores", href: "/admin/suppliers", icon: Storefront },
-  { label: "Inventory", href: "/admin/inventory", icon: Stack },
-  { label: "Pricing", href: "/admin/pricing", icon: CurrencyInr },
-  { label: "Categories", href: "/admin/categories", icon: SquaresFour },
-  { label: "Reports", href: "/admin/reports", icon: ChartBar },
+  { label: "Buy", href: "/admin/buy", icon: ShoppingCart },
+  { label: "Items", href: "/admin/items", icon: Package },
+  { label: "Shops", href: "/admin/shops", icon: Storefront },
   { label: "Settings", href: "/admin/settings", icon: Gear },
 ];
 
@@ -87,36 +79,34 @@ export function AdminTopBar({ userEmail }: AdminTopBarProps) {
           {menuOpen ? <X size={18} weight="bold" /> : <List size={18} weight="bold" />}
         </Button>
 
-        {/* Global Search (Section 10) */}
+        {/* Global Search */}
         <div className="flex-1 max-w-md min-w-0">
-          <form action="/admin/search" method="GET" className="relative w-full">
+          <form action="/admin/items" method="GET" className="relative w-full">
             <input
               type="text"
               name="q"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search stores, products, bills..."
-              className="w-full h-10 pl-9 pr-3 rounded-md bg-page border border-border text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-leaf focus:bg-surface transition-all"
+              placeholder="Search items, shops..."
+              className="w-full h-10 pl-9 pr-9 rounded-md bg-page border border-border text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-leaf focus:bg-surface transition-all"
             />
             <MagnifyingGlass
               size={16}
               className="absolute left-3 top-3 text-muted pointer-events-none"
             />
+            <div className="absolute right-1 top-1/2 -translate-y-1/2">
+              <MicButton
+                onResult={(text) => {
+                  setSearchQuery(text);
+                  window.location.href = `/admin/items?q=${encodeURIComponent(text.trim())}`;
+                }}
+              />
+            </div>
           </form>
         </div>
 
-        {/* Right controls: View Store + Privacy Mode + Logout */}
+        {/* Right controls: Privacy Mode + Settings (Gear) + Logout */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <Link
-            href="/"
-            title="Go to customer storefront"
-            className="inline-flex items-center gap-1.5 h-10 px-2.5 sm:px-3 rounded-md border border-border bg-page hover:bg-leaf-light hover:text-leaf hover:border-leaf/30 text-xs font-semibold text-ink transition-colors shrink-0"
-          >
-            <Storefront size={16} weight="bold" className="text-leaf" />
-            <span className="hidden sm:inline">View Store</span>
-            <span className="sm:hidden">Shop</span>
-          </Link>
-
           <Button
             type="button"
             variant={privacyMode ? "turmeric" : "outline"}
@@ -128,6 +118,7 @@ export function AdminTopBar({ userEmail }: AdminTopBarProps) {
                 : "Turn on privacy mode to mask wholesale costs"
             }
             className="flex items-center gap-1.5 text-xs h-10 min-h-[40px] px-2.5 sm:px-3"
+            aria-label={privacyMode ? "Turn off privacy mode" : "Turn on privacy mode"}
           >
             {privacyMode ? (
               <>
@@ -142,16 +133,40 @@ export function AdminTopBar({ userEmail }: AdminTopBarProps) {
             )}
           </Button>
 
+          {/* Customer Storefront Link */}
+          <Link
+            href="/"
+            title="View customer storefront"
+            aria-label="View customer storefront"
+            className="inline-flex items-center justify-center h-10 px-2.5 rounded-md border border-border bg-page hover:bg-leaf-light hover:text-leaf transition-colors text-xs font-semibold gap-1.5"
+          >
+            <Storefront size={18} className="text-leaf shrink-0" />
+            <span className="hidden sm:inline">Store</span>
+          </Link>
+
+          {/* Settings Gear Icon */}
+          <Link
+            href="/admin/settings"
+            title="Settings"
+            aria-label="Settings"
+            className={`inline-flex items-center justify-center h-10 w-10 rounded-md border border-border hover:bg-leaf-light hover:text-leaf transition-colors ${
+              pathname === "/admin/settings" ? "bg-leaf-light text-leaf border-leaf/40" : "bg-page text-ink"
+            }`}
+          >
+            <Gear size={18} weight={pathname === "/admin/settings" ? "bold" : "regular"} />
+          </Link>
+
+          {/* Sign out */}
           <Button
             type="button"
             variant="ghost"
             size="iconSm"
             onClick={() => signOut({ callbackUrl: "/admin/login" })}
             title={`Log out (${userEmail || "Owner"})`}
+            aria-label="Log out"
             className="h-10 w-10 text-muted hover:text-red hover:bg-red-light"
           >
             <SignOut size={18} />
-            <span className="sr-only">Log out</span>
           </Button>
         </div>
       </header>
@@ -167,7 +182,7 @@ export function AdminTopBar({ userEmail }: AdminTopBarProps) {
                 className="h-8 w-auto object-contain shrink-0"
               />
               <div>
-                <p className="text-sm font-bold text-leaf leading-tight">Pandian Store Admin</p>
+                <p className="text-sm font-bold text-leaf leading-tight">Pandian Store</p>
                 {userEmail && <p className="text-[11px] text-muted">{userEmail}</p>}
               </div>
             </div>
@@ -175,12 +190,11 @@ export function AdminTopBar({ userEmail }: AdminTopBarProps) {
               href="/"
               className="inline-flex items-center gap-1 text-xs font-semibold text-leaf hover:underline px-2 py-1.5"
             >
-              <ArrowLeft size={14} />
-              <span>Storefront</span>
+              <span>Customer store</span>
             </Link>
           </div>
           <nav aria-label="Mobile Admin Drawer" className="grid grid-cols-2 gap-1.5">
-            {MOBILE_NAV_LINKS.map((item) => {
+            {NAV_LINKS.map((item) => {
               const Icon = item.icon;
               const isActive =
                 item.href === "/admin"

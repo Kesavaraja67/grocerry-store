@@ -199,3 +199,126 @@ export function isPriceReviewNeeded(
   return !c1.eq(c2);
 }
 
+export interface SliderPriceResult {
+  price: number;
+  cost: number;
+  mrp: number | null;
+  profitPerUnit: number;
+  markupPercent: number;
+  marginPercent: number;
+  minSlider: number;
+  maxSlider: number;
+  isBelowCost: boolean;
+  isAboveMRP: boolean;
+  isDisabled: boolean;
+  disabledReason?: string;
+  summaryText: string;
+}
+
+/**
+ * Pure function that calculates selling price, margins, and slider bounds for the Price Slider.
+ * Adheres to:
+ * - Default to MRP when MRP is set
+ * - Default to markup calculation when no MRP
+ * - MRP below cost disables the slider
+ * - Rounding never exceeds MRP
+ * - Min slider allows below-cost adjustment with warning
+ * - Max slider capped at MRP
+ */
+export function priceFromSlider(params: {
+  cost: Decimal | number | string;
+  mrp?: Decimal | number | string | null;
+  currentPrice?: Decimal | number | string | null;
+  chosenPrice?: Decimal | number | string | null;
+  recommendedMarkupPercent?: Decimal | number | string | null;
+  roundingMode?: RoundingMode;
+}): SliderPriceResult {
+  const c = new Decimal(params.cost || 0).toNumber();
+  const m =
+    params.mrp !== null && params.mrp !== undefined && Number(params.mrp) > 0
+      ? Number(params.mrp)
+      : null;
+
+  // Guard: MRP below cost -> disabled
+  if (m !== null && m < c) {
+    return {
+      price: m,
+      cost: c,
+      mrp: m,
+      profitPerUnit: Math.round((m - c) * 100) / 100,
+      markupPercent: c > 0 ? Math.round(((m - c) / c) * 100) : 0,
+      marginPercent: m > 0 ? Math.round(((m - c) / m) * 100) : 0,
+      minSlider: m,
+      maxSlider: m,
+      isBelowCost: true,
+      isAboveMRP: false,
+      isDisabled: true,
+      disabledReason: "MRP is below cost. Selling at or below MRP would result in a loss.",
+      summaryText: "MRP is below cost",
+    };
+  }
+
+  // Determine active price
+  let price: number;
+  if (params.chosenPrice !== null && params.chosenPrice !== undefined) {
+    price = Number(params.chosenPrice);
+  } else if (
+    params.currentPrice !== null &&
+    params.currentPrice !== undefined &&
+    Number(params.currentPrice) > 0
+  ) {
+    price = Number(params.currentPrice);
+    if (m !== null && price > m) {
+      price = m;
+    }
+  } else {
+    // If MRP exists, default to MRP
+    if (m !== null) {
+      price = m;
+    } else {
+      // Calculate from markup
+      const markup = Number(params.recommendedMarkupPercent || 10);
+      const rounded = calculatePriceFromMarkup(c, markup, params.roundingMode || "UP_1");
+      price = rounded.toNumber();
+      if (m !== null && price > m) {
+        price = m;
+      }
+    }
+  }
+
+  // Rounding never above MRP
+  if (m !== null && price > m) {
+    price = m;
+  }
+
+  // Slider bounds: min allows slight discount below cost with warning, max capped at MRP
+  const minSlider = Math.max(1, Math.floor(c * 0.8));
+  const maxSlider = m !== null ? m : Math.max(Math.ceil(c * 1.5), Math.ceil(price * 1.2), 50);
+
+  const profitPerUnit = Math.round((price - c) * 100) / 100;
+  const markupPercent = c > 0 ? Math.round(((price - c) / c) * 100) : 0;
+  const marginPercent = price > 0 ? Math.round(((price - c) / price) * 100) : 0;
+
+  const isBelowCost = price < c;
+  const isAboveMRP = m !== null && price > m;
+
+  const summaryText = isBelowCost
+    ? `Loss of ₹${Math.abs(profitPerUnit)} per unit`
+    : `Earns ₹${profitPerUnit} (${markupPercent}%)`;
+
+  return {
+    price,
+    cost: c,
+    mrp: m,
+    profitPerUnit,
+    markupPercent,
+    marginPercent,
+    minSlider,
+    maxSlider,
+    isBelowCost,
+    isAboveMRP,
+    isDisabled: false,
+    summaryText,
+  };
+}
+
