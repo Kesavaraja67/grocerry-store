@@ -21,6 +21,7 @@ declare module "next-auth" {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   providers: [
     Credentials({
       name: "Owner Login",
@@ -87,6 +88,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = "OWNER";
       }
       return session;
+    },
+    redirect({ url, baseUrl }) {
+      const prodFallback =
+        process.env.NEXT_PUBLIC_SITE_URL || "https://pandianstore.vercel.app";
+      const safeBase =
+        process.env.NODE_ENV === "production" && baseUrl.includes("localhost")
+          ? prodFallback
+          : baseUrl;
+
+      if (url.startsWith("/")) {
+        return `${safeBase}${url}`;
+      }
+
+      try {
+        const target = new URL(url);
+        if (
+          process.env.NODE_ENV === "production" &&
+          (target.hostname === "localhost" || target.hostname === "127.0.0.1")
+        ) {
+          return `${safeBase}${target.pathname}${target.search}${target.hash}`;
+        }
+        if (target.origin === new URL(safeBase).origin) {
+          return url;
+        }
+      } catch {
+        // Invalid URL; fall back to safeBase
+      }
+
+      return safeBase;
     },
   },
 });

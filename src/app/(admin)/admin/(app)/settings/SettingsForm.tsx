@@ -354,7 +354,10 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           <Button
             type="button"
             variant="ghost"
-            onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            onClick={async () => {
+              await signOut({ redirect: false });
+              window.location.assign("/admin/login");
+            }}
             className="h-12 text-xs font-bold text-red hover:bg-red-50 hover:text-red-700 gap-2 min-h-[48px]"
           >
             <SignOut size={16} />

@@ -161,7 +161,10 @@ export function AdminTopBar({ userEmail }: AdminTopBarProps) {
             type="button"
             variant="ghost"
             size="iconSm"
-            onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            onClick={async () => {
+              await signOut({ redirect: false });
+              window.location.assign("/admin/login");
+            }}
             title={`Log out (${userEmail || "Owner"})`}
             aria-label="Log out"
             className="h-10 w-10 text-muted hover:text-red hover:bg-red-light"
